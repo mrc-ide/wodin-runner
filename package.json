@@ -1,5 +1,5 @@
 {
-    "name": "wodin-support",
+    "name": "wodin-runner",
     "version": "0.0.1",
     "description": "Wodin support",
     "main": "lib/index.js",
@@ -15,14 +15,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/mrc-ide/wodin-support.git"
+        "url": "git+https://github.com/mrc-ide/wodin-runner.git"
     },
     "author": "Rich FitzJohn <rich.fitzjohn@gmail.com>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/mrc-ide/wodin-support/issues"
+        "url": "https://github.com/mrc-ide/wodin-runner/issues"
     },
-    "homepage": "https://github.com/mrc-ide/wodin-support#readme",
+    "homepage": "https://github.com/mrc-ide/wodin-runner#readme",
     "devDependencies": {
         "@types/jest": "^27.5.1",
         "jest": "^28.0.0",
