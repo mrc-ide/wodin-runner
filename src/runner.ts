@@ -16,7 +16,7 @@ export function checkUser(user: UserType, allowed: string[],
         const msg = "Unknown user parameters: " + err.join(", ");
         if (unusedUserAction === "message") {
             console.log(msg);
-        } else if (unusedUserAction == "warning") {
+        } else if (unusedUserAction === "warning") {
             console.warn(msg);
         } else if (unusedUserAction === "stop") {
             throw Error(msg);
@@ -26,13 +26,14 @@ export function checkUser(user: UserType, allowed: string[],
     }
 }
 
-export function getUser(user: UserType, name: string, internal: InternalStorage,
-                        defaultValue: number | null, min: number | null,
-                        max: number | null, isInteger: boolean) {
+export function getUserScalar(user: UserType, name: string,
+                              internal: InternalStorage,
+                              defaultValue: number | null, min: number | null,
+                              max: number | null, isInteger: boolean) {
     const value = user.get(name);
     if (value === undefined) {
         if (defaultValue === null) {
-            throw Error(`Expected a value for '${name}'`)
+            throw Error(`Expected a value for '${name}'`);
         } else {
             internal[name] = defaultValue;
         }
@@ -48,4 +49,14 @@ export function getUser(user: UserType, name: string, internal: InternalStorage,
         }
         internal[name] = value;
     }
+}
+
+export function grid(a: number, b: number, len: number) {
+    const dx = (b - a) / (len - 1);
+    const x = [];
+    for (let i = 0; i < len - 1; ++i) {
+        x.push(a + i * dx);
+    }
+    x.push(b);
+    return x;
 }

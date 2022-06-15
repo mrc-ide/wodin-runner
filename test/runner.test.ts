@@ -1,5 +1,4 @@
-import {add} from "../src/index";
-import {InternalStorage, UserType, checkUser, getUser} from "../src/runner";
+import {InternalStorage, UserType, checkUser, getUserScalar, grid} from "../src/runner";
 
 describe("checkUser", () => {
     const pars = new Map<string, number>([["a", 1], ["b", 2], ["c", 3]]);
@@ -41,31 +40,38 @@ describe("checkUser", () => {
     })
 });
 
-describe("getUser", () => {
+describe("getUserScalar", () => {
     const pars = new Map<string, number>([["a", 1], ["b", 2.5], ["c", 3]]);
     it("Can retrieve a user value", () => {
         const internal = {} as InternalStorage;
-        getUser(pars, "a", internal, null, null, null, false);
+        getUserScalar(pars, "a", internal, null, null, null, false);
         expect(internal["a"]).toEqual(1);
     });
 
     it("Can fall back on default value, erroring if unavailable", () => {
         const internal = {} as InternalStorage;
-        getUser(pars, "d", internal, 1, null, null, false);
+        getUserScalar(pars, "d", internal, 1, null, null, false);
         expect(internal["d"]).toEqual(1);
-        expect(() => getUser(pars, "d", internal, null, null, null, false))
+        expect(() => getUserScalar(pars, "d", internal, null, null, null, false))
             .toThrow("Expected a value for 'd'");
     });
 
     it("Can validate that the provided value satisfies constraints", () => {
         const internal = {} as InternalStorage;
-        getUser(pars, "a", internal, null, 0, 2, false);
+        getUserScalar(pars, "a", internal, null, 0, 2, false);
         expect(internal["a"]).toEqual(1);
-        expect(() => getUser(pars, "a", internal, null, 2, 4, false))
+        expect(() => getUserScalar(pars, "a", internal, null, 2, 4, false))
             .toThrow("Expected 'a' to be at least 2");
-        expect(() => getUser(pars, "a", internal, null, -2, 0, false))
+        expect(() => getUserScalar(pars, "a", internal, null, -2, 0, false))
             .toThrow("Expected 'a' to be at most 0");
-        expect(() => getUser(pars, "b", internal, null, null, null, true))
+        expect(() => getUserScalar(pars, "b", internal, null, null, null, true))
             .toThrow("Expected 'b' to be integer-like");
+    });
+});
+
+
+describe("grid", () => {
+    it("Can produce an array of numbers", () => {
+        expect(grid(0, 10, 6)).toEqual([0, 2, 4, 6, 8, 10]);
     });
 });
