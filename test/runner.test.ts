@@ -1,4 +1,5 @@
-import {InternalStorage, UserType, checkUser, getUserScalar, grid} from "../src/runner";
+import {InternalStorage, OdinModelConstructable, UserType, checkUser, getUserScalar, grid, wodinRun} from "../src/runner";
+import {Example} from "./models/minimal";
 
 describe("checkUser", () => {
     const pars = new Map<string, number>([["a", 1], ["b", 2], ["c", 3]]);
@@ -73,5 +74,14 @@ describe("getUserScalar", () => {
 describe("grid", () => {
     it("Can produce an array of numbers", () => {
         expect(grid(0, 10, 6)).toEqual([0, 2, 4, 6, 8, 10]);
+    });
+});
+
+
+describe("can run model", () => {
+    it("Can run without error", () => {
+        const user = new Map<string, number>();
+        const control : any = {};
+        const result = wodinRun(Example, user, 0, 10, control);
     });
 });

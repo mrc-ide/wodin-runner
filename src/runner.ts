@@ -1,5 +1,44 @@
+import * as dopri from "dopri";
 export type UserType = Map<string, number>;
 export type InternalStorage = Record<string, number | number[]>;
+
+export type OdinModelConstructable = new(pars: UserType, unknownAction: string) => OdinModel;
+
+interface OdinModel {
+    initial(t: number): number[];
+    rhs(t: number, y: number[], dydt: number[]): void;
+    output?(t: number, y: number[]): number[];
+    names(): string[];
+}
+
+// tslint:disable-next-line:variable-name
+export function wodinRun(Model: OdinModelConstructable, pars: UserType,
+                         tStart: number, tEnd: number,
+                         control: any) {
+    const model = new Model(pars, "error");
+    // tslint:disable-next-line:only-arrow-functions
+    const rhs = function(t: number, y: number[], dydt: number[]) {
+        model.rhs(t, y, dydt);
+    };
+
+    let output = null;
+    if (typeof model.output === "function") {
+        const outputFunc = model.output; // avoids ts complaint
+        output = (t: number, y: number[]) => outputFunc(t, y);
+    }
+
+    const y0 = model.initial(tStart);
+    const solver = new dopri.Dopri(rhs, y0.length, control, output);
+    solver.initialise(tStart, y0);
+    const solution = solver.run(tEnd);
+    const names = model.names();
+    return (t0: number, t1: number, nPoints: number) => {
+        const t = grid(Math.max(0, t0), Math.min(t1, tEnd), nPoints);
+        const y = solution(t);
+        return y[0].map((_: any, i: number) => ({
+            name: names[i], x: t, y: y.map((row: number[]) => row[i])}));
+    };
+}
 
 export function checkUser(user: UserType, allowed: string[],
                           unusedUserAction: string) {
