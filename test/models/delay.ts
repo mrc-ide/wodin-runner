@@ -1,6 +1,6 @@
 // @ts-nocheck
 export class ExDelay {
-    constructor(user, unusedUserAction) {
+    constructor(userHelpers, user, unusedUserAction) {
         this.internal = {};
         var internal = this.internal;
         internal.a = 1;

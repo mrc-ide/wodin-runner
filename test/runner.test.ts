@@ -1,6 +1,8 @@
-import {InternalStorage, OdinModelConstructable, UserType, checkUser, getUserScalar, grid, wodinRun} from "../src/runner";
+import {OdinModelConstructable, grid, wodinRun} from "../src/runner";
+import {InternalStorage, UserType, checkUser, getUserScalar} from "../src/user";
 import {ExMinimal} from "./models/minimal";
 import {ExDelay} from "./models/delay";
+import {ExUser} from "./models/user";
 
 describe("checkUser", () => {
     const pars = new Map<string, number>([["a", 1], ["b", 2], ["c", 3]]);
@@ -90,5 +92,21 @@ describe("can run delay model", () => {
         const user = new Map<string, number>();
         const control : any = {};
         const result = wodinRun(ExDelay, user, 0, 10, control);
+    });
+});
+
+describe("can set user", () => {
+    it("Agrees with mininal model", () => {
+        const pars1 = new Map<string, number>();
+        const pars2 = new Map<string, number>([["a", 1]]);
+        const control : any = {};
+        const result1 = wodinRun(ExMinimal, pars1, 0, 10, control);
+        const result2 = wodinRun(ExUser, pars2, 0, 10, control);
+        console.log(result1);
+        console.log("\n");
+        console.log(result2);
+        console.log("\n");
+        console.log("HELLO WORLD\n");
+        // expect(result1).toEqual(result2);
     });
 });

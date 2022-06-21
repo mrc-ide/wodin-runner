@@ -1,6 +1,6 @@
 // @ts-nocheck
 export class ExMinimal {
-    constructor(user, unusedUserAction) {
+    constructor(userHelpers, user, unusedUserAction) {
         this.internal = {};
         var internal = this.internal;
         internal.initial_x = 1;

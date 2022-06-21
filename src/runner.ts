@@ -1,9 +1,13 @@
 import * as dopri from "dopri";
-export type UserType = Map<string, number>;
-export type InternalStorage = Record<string, number | number[]>;
+import type { UserType } from "./user";
+import * as userHelpers from "./user";
+
+// Probably this is something that dopri should export for us, we
+// could also use its types for the rhs and output members below.
 type Solution = (t: number) => number[];
 
-export type OdinModelConstructable = new(pars: UserType, unknownAction: string) => OdinModel;
+export type OdinModelConstructable =
+    new(userHelpers: any, pars: UserType, unknownAction: string) => OdinModel;
 
 interface OdinModelODE {
     initial(t: number): number[];
@@ -25,7 +29,7 @@ export type OdinModel = OdinModelODE | OdinModelDDE;
 export function wodinRun(Model: OdinModelConstructable, pars: UserType,
                          tStart: number, tEnd: number,
                          control: any) {
-    const model = new Model(pars, "error");
+    const model = new Model(userHelpers, pars, "error");
     const solution = (
         model.rhs.length === 4 ?
             wodinRunDDE(model as OdinModelDDE, tStart, tEnd, control) :
@@ -78,56 +82,6 @@ function wodinRunDDE(model: OdinModelDDE, tStart: number, tEnd: number,
     const solver = new dopri.DDE(rhs, y0.length, control, output);
     solver.initialise(tStart, y0);
     return solver.run(tEnd);
-}
-
-export function checkUser(user: UserType, allowed: string[],
-                          unusedUserAction: string) {
-    if (unusedUserAction === "ignore") {
-        return;
-    }
-    const err = [];
-    for (const k of user.keys()) {
-        if (!allowed.includes(k)) {
-            err.push(k);
-        }
-    }
-    if (err.length > 0) {
-        const msg = "Unknown user parameters: " + err.join(", ");
-        if (unusedUserAction === "message") {
-            console.log(msg);
-        } else if (unusedUserAction === "warning") {
-            console.warn(msg);
-        } else if (unusedUserAction === "stop") {
-            throw Error(msg);
-        } else {
-            throw Error(msg + " (and invalid value for unusedUserAction)");
-        }
-    }
-}
-
-export function getUserScalar(user: UserType, name: string,
-                              internal: InternalStorage,
-                              defaultValue: number | null, min: number | null,
-                              max: number | null, isInteger: boolean) {
-    const value = user.get(name);
-    if (value === undefined) {
-        if (defaultValue === null) {
-            throw Error(`Expected a value for '${name}'`);
-        } else {
-            internal[name] = defaultValue;
-        }
-    } else {
-        if (min !== null && value < min) {
-            throw Error(`Expected '${name}' to be at least ${min}`);
-        }
-        if (max !== null && value > max) {
-            throw Error(`Expected '${name}' to be at most ${max}`);
-        }
-        if (isInteger && !Number.isInteger(value)) {
-            throw Error(`Expected '${name}' to be integer-like`);
-        }
-        internal[name] = value;
-    }
 }
 
 export function grid(a: number, b: number, len: number) {
