@@ -1,5 +1,5 @@
 // @ts-nocheck
-export class Example {
+export class ExMinimal {
     constructor(user, unusedUserAction) {
         this.internal = {};
         var internal = this.internal;
