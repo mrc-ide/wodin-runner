@@ -3,6 +3,7 @@ import {InternalStorage, UserType, checkUser, getUserScalar} from "../src/user";
 import {ExMinimal} from "./models/minimal";
 import {ExDelay} from "./models/delay";
 import {ExUser} from "./models/user";
+import {approxEqualArray} from "./helpers";
 
 describe("checkUser", () => {
     const pars = new Map<string, number>([["a", 1], ["b", 2], ["c", 3]]);
@@ -102,11 +103,32 @@ describe("can set user", () => {
         const control : any = {};
         const result1 = wodinRun(ExMinimal, pars1, 0, 10, control);
         const result2 = wodinRun(ExUser, pars2, 0, 10, control);
-        console.log(result1);
-        console.log("\n");
-        console.log(result2);
-        console.log("\n");
-        console.log("HELLO WORLD\n");
-        // expect(result1).toEqual(result2);
+        const y1 = result1(0, 10, 11);
+        const y2 = result2(0, 10, 11);
+        expect(y1).toEqual(y2);
     });
+
+    it("Can pick up default values", () => {
+        const pars1 = new Map<string, number>();
+        const pars2 = new Map<string, number>([["a", 1]]);
+        const control : any = {};
+        const result1 = wodinRun(ExUser, pars1, 0, 10, control);
+        const result2 = wodinRun(ExUser, pars2, 0, 10, control);
+        const y1 = result1(0, 10, 11);
+        const y2 = result2(0, 10, 11);
+        expect(y1).toEqual(y2);
+    });
+
+    it("Varies by changing parameters", () => {
+        const pars = new Map<string, number>([["a", 2]]);
+        const control : any = {};
+        const result = wodinRun(ExUser, pars, 0, 10, control);
+        const y = result(0, 10, 11);
+        const expectedX = grid(0, 10, 11);
+        const expectedY = expectedX.map((t: number) => t * 2 + 1);
+        expect(y.length).toEqual(1);
+        expect(y[0].name).toEqual("x");
+        expect(y[0].x).toEqual(expectedX);
+        expect(approxEqualArray(y[0].y, expectedY)).toBe(true);
+    })
 });
