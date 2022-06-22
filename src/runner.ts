@@ -30,15 +30,15 @@ export function delay(solution: Solution, t: number, index: number[],
     // Later, we'll update dopri.js to allow passing index here,
     // which will make this more efficient. However, no change to
     // the external interface will be neeed.
-    var y = solution(t);
-    for (var i = 0; i < index.length; ++i) {
+    const y = solution(t);
+    for (let i = 0; i < index.length; ++i) {
         state[i] = y[index[i]];
     }
 }
 
 export const base = {checkUser: userHelpers.checkUser,
-                     getUserScalar: userHelpers.getUserScalar,
-                     delay};
+                     delay,
+                     getUserScalar: userHelpers.getUserScalar};
 
 // tslint:disable-next-line:variable-name
 export function wodinRun(Model: OdinModelConstructable, pars: UserType,
