@@ -71,6 +71,7 @@ function wodinRunODE(model: OdinModelODE, tStart: number, tEnd: number,
         // rebound and no longer a function. We tried saving
         //   const output = model.output;
         // which pleases the compiler but then fails at runtime.
+        // tslint:disable-next-line:ban-types
         output = (t: number, y: number[]) => (model.output as Function)(t, y);
     }
 
@@ -92,6 +93,7 @@ function wodinRunDDE(model: OdinModelDDE, tStart: number, tEnd: number,
     if (typeof model.output === "function") {
         // As above for the ODE version
         output = (t: number, y: number[], solution: Solution) =>
+            // tslint:disable-next-line:ban-types
             (model.output as Function)(t, y, solution);
     }
 
