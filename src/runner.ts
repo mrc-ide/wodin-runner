@@ -23,6 +23,10 @@ interface OdinModelDDE {
     names(): string[];
 }
 
+function isDDEModel(model: OdinModel): model is OdinModelDDE {
+    return model.rhs.length === 4;
+}
+
 export type OdinModel = OdinModelODE | OdinModelDDE;
 
 export function delay(solution: Solution, t: number, index: number[],
@@ -46,7 +50,7 @@ export function wodinRun(Model: OdinModelConstructable, pars: UserType,
                          control: any) {
     const model = new Model(base, pars, "error");
     const solution = (
-        model.rhs.length === 4 ?
+        isDDEModel(model) ?
             wodinRunDDE(model as OdinModelDDE, tStart, tEnd, control) :
             wodinRunODE(model as OdinModelODE, tStart, tEnd, control));
     const names = model.names();
