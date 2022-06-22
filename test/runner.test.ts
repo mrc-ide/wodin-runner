@@ -48,6 +48,20 @@ describe("can run basic models", () => {
         const control : any = {};
         const solution = wodinRun(models.Delay, user, 0, 10, control);
         const y = solution(0, 10, 11);
+
+        const expectedT = grid(0, 10, 11);
+        const expectedX = expectedT.map((t: number) => t + 1);
+        const expectedY = expectedT.map((t: number) => Math.max(1, t - 1));
+
+        expect(y.length).toEqual(2);
+
+        expect(y[0].name).toEqual("x");
+        expect(y[0].x).toEqual(expectedT);
+        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
+
+        expect(y[1].name).toEqual("y");
+        expect(y[1].x).toEqual(expectedT);
+        expect(approxEqualArray(y[1].y, expectedY, 1e-3)).toBe(true);
     });
 
     it("runs delay model without output without error", () => {
@@ -55,13 +69,20 @@ describe("can run basic models", () => {
         const control : any = {};
         const solution = wodinRun(models.DelayNoOutput, user, 0, 10, control);
         const y = solution(0, 10, 11);
-    });
 
-    it("runs delay model without output without error", () => {
-        const user = new Map<string, number>();
-        const control : any = {};
-        const solution = wodinRun(models.OutputUsesInternal, user, 0, 10, control);
-        const y = solution(0, 10, 11);
+        const expectedT = grid(0, 10, 11);
+        const expectedX = expectedT.map((t: number) => t + 1);
+        const expectedY = [1, 2, 3, 4.5, 7, 10.5, 15, 20.5, 27, 34.5, 43];
+
+        expect(y.length).toEqual(2);
+
+        expect(y[0].name).toEqual("x");
+        expect(y[0].x).toEqual(expectedT);
+        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
+
+        expect(y[1].name).toEqual("y");
+        expect(y[1].x).toEqual(expectedT);
+        expect(approxEqualArray(y[1].y, expectedY, 1e-3)).toBe(true);
     });
 });
 
