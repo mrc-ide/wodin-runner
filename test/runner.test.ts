@@ -3,6 +3,7 @@ import {InternalStorage, UserType, checkUser, getUserScalar} from "../src/user";
 import {ExMinimal} from "./models/minimal";
 import {ExDelay} from "./models/delay";
 import {ExUser} from "./models/user";
+import {ExOutput} from "./models/output";
 import {approxEqualArray} from "./helpers";
 
 describe("checkUser", () => {
@@ -80,16 +81,42 @@ describe("grid", () => {
     });
 });
 
-describe("can run model", () => {
-    it("Can run without error", () => {
+describe("can run basic models", () => {
+    it("runs minimal model with expected output", () => {
         const user = new Map<string, number>();
         const control : any = {};
         const result = wodinRun(ExMinimal, user, 0, 10, control);
-    });
-});
 
-describe("can run delay model", () => {
-    it("Can run without error", () => {
+        const y = result(0, 10, 11);
+        const expectedT = grid(0, 10, 11);
+        const expectedX = expectedT.map((t: number) => t + 1);
+        expect(y.length).toEqual(1);
+        expect(y[0].name).toEqual("x");
+        expect(y[0].x).toEqual(expectedT);
+        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
+    });
+
+    it("runs model with output, with expected output", () => {
+        const user = new Map<string, number>([["a", 1]]);
+        const control : any = {};
+        const result = wodinRun(ExOutput, user, 0, 10, control);
+
+        const y = result(0, 10, 11);
+        const expectedT = grid(0, 10, 11);
+        const expectedX = expectedT.map((t: number) => t + 1);
+        const expectedY = expectedX.map((x: number) => x * 2);
+        expect(y.length).toEqual(2);
+
+        expect(y[0].name).toEqual("x");
+        expect(y[0].x).toEqual(expectedT);
+        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
+
+        expect(y[1].name).toEqual("y");
+        expect(y[1].x).toEqual(expectedT);
+        expect(approxEqualArray(y[1].y, expectedY)).toBe(true);
+    });
+
+    it("runs delay model without error", () => {
         const user = new Map<string, number>();
         const control : any = {};
         const result = wodinRun(ExDelay, user, 0, 10, control);
