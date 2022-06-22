@@ -1,9 +1,6 @@
 import {OdinModelConstructable, grid, wodinRun} from "../src/runner";
 import {InternalStorage, UserType, checkUser, getUserScalar} from "../src/user";
-import {ExMinimal} from "./models/minimal";
-import {ExDelay} from "./models/delay";
-import {ExUser} from "./models/user";
-import {ExOutput} from "./models/output";
+import * as models from "./models";
 import {approxEqualArray} from "./helpers";
 
 describe("checkUser", () => {
@@ -85,7 +82,7 @@ describe("can run basic models", () => {
     it("runs minimal model with expected output", () => {
         const user = new Map<string, number>();
         const control : any = {};
-        const result = wodinRun(ExMinimal, user, 0, 10, control);
+        const result = wodinRun(models.Minimal, user, 0, 10, control);
 
         const y = result(0, 10, 11);
         const expectedT = grid(0, 10, 11);
@@ -99,7 +96,7 @@ describe("can run basic models", () => {
     it("runs model with output, with expected output", () => {
         const user = new Map<string, number>([["a", 1]]);
         const control : any = {};
-        const result = wodinRun(ExOutput, user, 0, 10, control);
+        const result = wodinRun(models.Output, user, 0, 10, control);
 
         const y = result(0, 10, 11);
         const expectedT = grid(0, 10, 11);
@@ -119,7 +116,7 @@ describe("can run basic models", () => {
     it("runs delay model without error", () => {
         const user = new Map<string, number>();
         const control : any = {};
-        const result = wodinRun(ExDelay, user, 0, 10, control);
+        const result = wodinRun(models.Delay, user, 0, 10, control);
     });
 });
 
@@ -128,8 +125,8 @@ describe("can set user", () => {
         const pars1 = new Map<string, number>();
         const pars2 = new Map<string, number>([["a", 1]]);
         const control : any = {};
-        const result1 = wodinRun(ExMinimal, pars1, 0, 10, control);
-        const result2 = wodinRun(ExUser, pars2, 0, 10, control);
+        const result1 = wodinRun(models.Minimal, pars1, 0, 10, control);
+        const result2 = wodinRun(models.User, pars2, 0, 10, control);
         const y1 = result1(0, 10, 11);
         const y2 = result2(0, 10, 11);
         expect(y1).toEqual(y2);
@@ -139,8 +136,8 @@ describe("can set user", () => {
         const pars1 = new Map<string, number>();
         const pars2 = new Map<string, number>([["a", 1]]);
         const control : any = {};
-        const result1 = wodinRun(ExUser, pars1, 0, 10, control);
-        const result2 = wodinRun(ExUser, pars2, 0, 10, control);
+        const result1 = wodinRun(models.User, pars1, 0, 10, control);
+        const result2 = wodinRun(models.User, pars2, 0, 10, control);
         const y1 = result1(0, 10, 11);
         const y2 = result2(0, 10, 11);
         expect(y1).toEqual(y2);
@@ -149,7 +146,7 @@ describe("can set user", () => {
     it("Varies by changing parameters", () => {
         const pars = new Map<string, number>([["a", 2]]);
         const control : any = {};
-        const result = wodinRun(ExUser, pars, 0, 10, control);
+        const result = wodinRun(models.User, pars, 0, 10, control);
         const y = result(0, 10, 11);
         const expectedX = grid(0, 10, 11);
         const expectedY = expectedX.map((t: number) => t * 2 + 1);
