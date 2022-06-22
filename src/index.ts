@@ -1,1 +1,1 @@
-import {wodinRun} from "./runner";
+export {wodinRun} from "./runner";

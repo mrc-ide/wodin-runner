@@ -67,8 +67,11 @@ function wodinRunODE(model: OdinModelODE, tStart: number, tEnd: number,
 
     let output = null;
     if (typeof model.output === "function") {
-        const outputFunc = model.output; // avoids ts complaint
-        output = (t: number, y: number[]) => outputFunc(t, y);
+        // Without 'as' here, TS thinks that model.output could be
+        // rebound and no longer a function. We tried saving
+        //   const output = model.output;
+        // which pleases the compiler but then fails at runtime.
+        output = (t: number, y: number[]) => (model.output as Function)(t, y);
     }
 
     const y0 = model.initial(tStart);
@@ -87,8 +90,9 @@ function wodinRunDDE(model: OdinModelDDE, tStart: number, tEnd: number,
 
     let output = null;
     if (typeof model.output === "function") {
-        const outputFunc = model.output; // avoids ts complaint
-        output = (t: number, y: number[], solution: Solution) => outputFunc(t, y, solution);
+        // As above for the ODE version
+        output = (t: number, y: number[], solution: Solution) =>
+            (model.output as Function)(t, y, solution);
     }
 
     const y0 = model.initial(tStart);

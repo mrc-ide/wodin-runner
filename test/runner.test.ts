@@ -47,12 +47,21 @@ describe("can run basic models", () => {
         const user = new Map<string, number>();
         const control : any = {};
         const solution = wodinRun(models.Delay, user, 0, 10, control);
+        const y = solution(0, 10, 11);
     });
 
     it("runs delay model without output without error", () => {
         const user = new Map<string, number>();
         const control : any = {};
         const solution = wodinRun(models.DelayNoOutput, user, 0, 10, control);
+        const y = solution(0, 10, 11);
+    });
+
+    it("runs delay model without output without error", () => {
+        const user = new Map<string, number>();
+        const control : any = {};
+        const solution = wodinRun(models.OutputUsesInternal, user, 0, 10, control);
+        const y = solution(0, 10, 11);
     });
 });
 
