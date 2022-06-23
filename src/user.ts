@@ -50,5 +50,3 @@ export function getUserScalar(user: UserType, name: string,
         internal[name] = value;
     }
 }
-
-export const userHelpers = {checkUser, getUserScalar};
