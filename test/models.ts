@@ -105,9 +105,9 @@ export class User {
 
     setUser(user, unusedUserAction) {
         const internal = this.internal;
-        this.base.checkUser(user, ["a"], unusedUserAction);
-        this.base.setUserScalar(user, "a", internal, 1,
-                                -Infinity, Infinity, false);
+        this.base.user.checkUser(user, ["a"], unusedUserAction);
+        this.base.user.setUserScalar(user, "a", internal, 1,
+                                     -Infinity, Infinity, false);
         this.updateMetadata();
     }
 }
@@ -155,9 +155,9 @@ export class Output {
 
     setUser(user, unusedUserAction) {
         var internal = this.internal;
-        this.base.checkUser(user, ["a"], unusedUserAction);
-        this.base.setUserScalar(user, "a", internal, 1,
-                                -Infinity, Infinity, false);
+        this.base.user.checkUser(user, ["a"], unusedUserAction);
+        this.base.user.setUserScalar(user, "a", internal, 1,
+                                     -Infinity, Infinity, false);
         this.updateMetadata();
     }
 }
@@ -206,7 +206,7 @@ export class DelayNoOutput {
     }
 
     setUser(user, unusedUserAction) {
-        this.base.checkUser(user, [], unusedUserAction);
+        this.base.user.checkUser(user, [], unusedUserAction);
         this.updateMetadata();
     }
 
