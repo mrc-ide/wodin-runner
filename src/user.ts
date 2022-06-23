@@ -37,6 +37,7 @@ export function getUserScalar(user: UserType, name: string,
                               max: number, isInteger: boolean) {
     const value = user.get(name);
     if (value === undefined) {
+        // TODO: pull values out of internals
         if (defaultValue === null) {
             throw Error(`Expected a value for '${name}'`);
         } else {
@@ -59,6 +60,7 @@ export function getUserArrayFixed(user: UserType, name: string,
                                   isInteger: boolean) {
     let value = user.get(name);
     if (value === undefined) {
+        // TODO: pull value out of internals
         throw Error("Expected a value for '" + name + "'");
     } else {
         const rank = size.length - 1;
@@ -108,7 +110,7 @@ function getUserArrayCheckType(value: UserValue, name: string) {
         // promote scalar number to vector, in the hope that's close
         // enough to what the user wants; this does give some
         // reasonable error messages relative to the C version.
-        value = {data: [value], dim: [1]}
+        value = {data: [value], dim: [1]};
     }
     return value;
 }
@@ -131,7 +133,7 @@ function getUserArrayCheckDimension(dim: number[], value: UserTensor,
     for (let i = 0; i < rank; ++i) {
         const expected = dim[i + 1];
         if (value.dim[i] !== expected) {
-            if (rank == 1) {
+            if (rank === 1) {
                 throw Error(`Expected length ${expected} value for '${name}'`);
             } else {
                 throw Error(`Incorrect size of dimension ${i + 1} of '${name}' (expected ${expected})`);
@@ -141,8 +143,7 @@ function getUserArrayCheckDimension(dim: number[], value: UserTensor,
 }
 
 function getUserArrayCheckContents(value: UserTensor, min: number, max: number, isInteger: boolean, name: string) {
-    for (let i = 0; i < value.data.length; ++i) {
-        const x = value.data[i];
+    for (const x of value.data) {
         if (x === null) {
             throw Error(`'${name}' must not contain any NA values`);
         }
