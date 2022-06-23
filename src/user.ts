@@ -70,12 +70,21 @@ export function getUserArrayFixed(user: UserType, name: string,
     }
 }
 
-export function getUserArrayVarible(user: UserType, name: string,
-                                    internal: InternalStorage,
-                                    size: number[],
-                                    min: number,
-                                    max: number,
-                                    isInteger: boolean) {
+// This one is used where we have
+//
+//   dim(x) <- user()
+//
+// which means that the extents are set based on the given array
+// (rather than some known value within size) and we report the values
+// back into the size variable. odin will then generate code that sets
+// the appropriate sizes into 'internal' later - we might move that
+// into here later.
+export function getUserArrayVariable(user: UserType, name: string,
+                                     internal: InternalStorage,
+                                     size: number[],
+                                     min: number,
+                                     max: number,
+                                     isInteger: boolean) {
     let value = user.get(name);
     if (value === undefined) {
         throw Error("Expected a value for '" + name + "'");
@@ -118,7 +127,7 @@ function getUserArrayCheckRank(rank: number, value: UserTensor, name: string) {
 
 function getUserArrayCheckDimension(dim: number[], value: UserTensor,
                                     name: string) {
-    const rank = dim.length;
+    const rank = dim.length - 1;
     for (let i = 0; i < rank; ++i) {
         const expected = dim[i + 1];
         if (value.dim[i] !== expected) {
@@ -149,6 +158,6 @@ function getUserCheckValue(value: number, min: number, max: number, isInteger: b
         throw Error(`Expected '${name}' to be at most ${max}`);
     }
     if (isInteger && !Number.isInteger(value)) {
-        throw Error(`Expected an integer value for '${name}'`);
+        throw Error(`Expected '${name}' to be integer-like`);
     }
 }
