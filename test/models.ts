@@ -31,6 +31,9 @@ export class Minimal {
     getInternal() {
         return this.internal;
     }
+
+    setUser(user, unusedUserAction) {
+    }
 }
 
 // @ts-nocheck
@@ -82,6 +85,9 @@ export class Delay {
 
     getInternal() {
         return this.internal;
+    }
+
+    setUser(user, unusedUserAction) {
     }
 }
 

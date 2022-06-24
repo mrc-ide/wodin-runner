@@ -46,4 +46,18 @@ describe("wrapper", () => {
         const y = result.y.map((el: number[]) => el[0]);
         expect(approxEqualArray(y, [2, 3, 4, 5, 6])).toBe(true);
     })
+
+    it("Can set user variables", () => {
+        const user = new Map<string, number>([["a", 1]]);
+        const control: any = {};
+        const mod = new PkgWrapper(models.User, user, "error");
+        const t = 0;
+        const y = [0];
+        expect(mod.rhs(t, y).state).toEqual([1]);
+        user.set("a", 2);
+        mod.setUser(user, "error");
+        expect(mod.rhs(t, y).state).toEqual([2]);
+        mod.setUser(new Map<string, number>(), "error");
+        expect(mod.rhs(t, y).state).toEqual([2]);
+    });
 });

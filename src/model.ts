@@ -10,6 +10,7 @@ export type OdinModelConstructable =
     new(base: any, pars: UserType, unknownAction: string) => OdinModel;
 
 interface OdinModelODE {
+    setUser(pars: UserType, unknownAction: string): void;
     initial(t: number): number[];
     rhs(t: number, y: number[], dydt: number[]): void;
     output?(t: number, y: number[]): number[];
@@ -19,6 +20,7 @@ interface OdinModelODE {
 }
 
 interface OdinModelDDE {
+    setUser(pars: UserType, unknownAction: string): void;
     initial(t: number): number[];
     rhs(t: number, y: number[], dydt: number[], solution: Solution): void;
     output?(t: number, y: number[], solution: Solution): number[];

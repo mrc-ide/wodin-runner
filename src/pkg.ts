@@ -39,6 +39,10 @@ export class PkgWrapper {
         return this.model.getInternal();
     }
 
+    public setUser(pars: UserType, unusedUserAction: string) {
+        this.model.setUser(pars, unusedUserAction);
+    }
+
     public run(t: number[], y0: number[] | null, control: any) {
         const tStart = t[0];
         const tEnd = t[t.length - 1];

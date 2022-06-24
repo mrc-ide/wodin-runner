@@ -45,7 +45,7 @@ export function setUserScalar(user: UserType, name: string,
         }
     } else {
         if (typeof value !== "number") {
-            throw Error(`Expected a scalar for '${name}'`);
+            throw Error(`Expected a number for '${name}'`);
         }
         setUserCheckValue(value, min, max, isInteger, name);
         internal[name] = value;

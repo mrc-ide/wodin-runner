@@ -50,10 +50,9 @@ describe("setUserScalar", () => {
 
     it("Can fall back on default value, erroring if unavailable", () => {
         const internal = {} as InternalStorage;
-        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
-        expect(internal["d"]).toEqual(1);
         expect(() => setUserScalar(pars, "d", internal, null, -Infinity, Infinity, false))
             .toThrow("Expected a value for 'd'");
+        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
     });
 
     it("Can validate that the provided value satisfies constraints", () => {
@@ -73,7 +72,7 @@ describe("setUserScalar", () => {
         const internal = {} as InternalStorage;
         expect(() => setUserScalar(
             pars, "a", internal, null, -Infinity, Infinity, false))
-            .toThrow("Expected a scalar for 'a'");
+            .toThrow("Expected a number for 'a'");
     });
 });
 
