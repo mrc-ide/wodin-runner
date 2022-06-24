@@ -16,7 +16,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        library: 'odin',
+        library: 'odinjs',
         filename: 'odin.js',
         path: path.resolve(__dirname, 'dist'),
     },
