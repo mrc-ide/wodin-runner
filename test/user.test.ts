@@ -170,6 +170,16 @@ describe("setUserArrayFixed", () => {
             .toThrow("'x' must not contain any NA values");
     });
 
+    it("Errors if given non-numeric data", () => {
+        const internal = {} as InternalStorage;
+        const pars = new Map<string, UserValue>([
+            ["x", {data: [1, 2, "three" as any], dim: [3]}]
+        ]);
+        expect(() => setUserArrayFixed(
+            pars, "x", internal, [3, 3], -Infinity, Infinity, false))
+            .toThrow("Expected a number for 'x'");
+    });
+
     it("Can fall back on existing values", () => {
         const internal = {x: [10, 11, 12]} as InternalStorage;
         setUserArrayFixed(pars, "x", internal, [3, 3],
@@ -178,7 +188,7 @@ describe("setUserArrayFixed", () => {
     });
 });
 
-describe("setUserArrayFixed", () => {
+describe("setUserArrayVariable", () => {
     const pars = new Map<string, UserValue>([
         ["a", 1],
         ["b", [1, 2, 3]],

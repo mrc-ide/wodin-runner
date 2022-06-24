@@ -158,6 +158,10 @@ function setUserArrayCheckContents(value: UserTensor, min: number, max: number, 
 }
 
 function setUserCheckValue(value: number, min: number, max: number, isInteger: boolean, name: string) {
+    // This exists to make the plain js interface more robust
+    if (typeof value !== "number") {
+        throw Error(`Expected a number for '${name}'`);
+    }
     if (value < min) {
         throw Error(`Expected '${name}' to be at least ${min}`);
     }
