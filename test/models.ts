@@ -23,6 +23,14 @@ export class Minimal {
     names() {
         return ["x"];
     }
+
+    getMetadata() {
+        return {};
+    }
+
+    getInternal() {
+        return this.internal;
+    }
 }
 
 // @ts-nocheck
@@ -67,6 +75,14 @@ export class Delay {
     names() {
         return ["x", "y"];
     }
+
+    getMetadata() {
+        return {};
+    }
+
+    getInternal() {
+        return this.internal;
+    }
 }
 
 // @ts-nocheck
@@ -109,6 +125,14 @@ export class User {
         this.base.user.setUserScalar(user, "a", internal, 1,
                                      -Infinity, Infinity, false);
         this.updateMetadata();
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+
+    getInternal() {
+        return this.internal;
     }
 }
 
@@ -159,6 +183,14 @@ export class Output {
         this.base.user.setUserScalar(user, "a", internal, 1,
                                      -Infinity, Infinity, false);
         this.updateMetadata();
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+
+    getInternal() {
+        return this.internal;
     }
 }
 
@@ -212,5 +244,13 @@ export class DelayNoOutput {
 
     names() {
         return this.metadata.ynames.slice(1);
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+
+    getInternal() {
+        return this.internal;
     }
 }

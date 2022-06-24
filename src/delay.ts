@@ -1,6 +1,4 @@
-// Probably this is something that dopri should export for us, we
-// could also use its types for the rhs and output members below.
-export type Solution = (t: number) => number[];
+import {Solution} from "./model";
 
 export function delay(solution: Solution, t: number, index: number[],
                       state: number[]) {

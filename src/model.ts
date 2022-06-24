@@ -1,8 +1,10 @@
 import * as dopri from "dopri";
 
-import * as base from "./base";
-import type { Solution } from "./delay";
-import type { UserType } from "./user";
+import {InternalStorage, UserType} from "./user";
+
+// Probably this is something that dopri should export for us, we
+// could also use its types for the rhs and output members below.
+export type Solution = (t: number) => number[];
 
 export type OdinModelConstructable =
     new(base: any, pars: UserType, unknownAction: string) => OdinModel;
@@ -12,6 +14,8 @@ interface OdinModelODE {
     rhs(t: number, y: number[], dydt: number[]): void;
     output?(t: number, y: number[]): number[];
     names(): string[];
+    getInternal(): InternalStorage;
+    getMetadata(): any;
 }
 
 interface OdinModelDDE {
@@ -19,33 +23,28 @@ interface OdinModelDDE {
     rhs(t: number, y: number[], dydt: number[], solution: Solution): void;
     output?(t: number, y: number[], solution: Solution): number[];
     names(): string[];
+    getInternal(): InternalStorage;
+    getMetadata(): any;
 }
 
-function isDDEModel(model: OdinModel): model is OdinModelDDE {
+export function isDDEModel(model: OdinModel): model is OdinModelDDE {
     return model.rhs.length === 4;
+}
+
+export function isODEModel(model: OdinModel): model is OdinModelODE {
+    return model.rhs.length === 3;
 }
 
 export type OdinModel = OdinModelODE | OdinModelDDE;
 
-// tslint:disable-next-line:variable-name
-export function wodinRun(Model: OdinModelConstructable, pars: UserType,
-                         tStart: number, tEnd: number,
+export function runModel(model: OdinModel, tStart: number, tEnd: number,
                          control: any) {
-    const model = new Model(base, pars, "error");
-    const solution = (
-        isDDEModel(model) ?
-            wodinRunDDE(model as OdinModelDDE, tStart, tEnd, control) :
-            wodinRunODE(model as OdinModelODE, tStart, tEnd, control));
-    const names = model.names();
-    return (t0: number, t1: number, nPoints: number) => {
-        const t = grid(Math.max(0, t0), Math.min(t1, tEnd), nPoints);
-        const y = solution(t);
-        return y[0].map((_: any, i: number) => ({
-            name: names[i], x: t, y: y.map((row: number[]) => row[i])}));
-    };
+    return isDDEModel(model) ?
+        runModelDDE(model as OdinModelDDE, tStart, tEnd, control) :
+        runModelODE(model as OdinModelODE, tStart, tEnd, control);
 }
 
-function wodinRunODE(model: OdinModelODE, tStart: number, tEnd: number,
+function runModelODE(model: OdinModelODE, tStart: number, tEnd: number,
                      control: any) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[]) {
@@ -65,10 +64,11 @@ function wodinRunODE(model: OdinModelODE, tStart: number, tEnd: number,
     const y0 = model.initial(tStart);
     const solver = new dopri.Dopri(rhs, y0.length, control, output);
     solver.initialise(tStart, y0);
-    return solver.run(tEnd);
+    return {solution: solver.run(tEnd),
+            statistics: solver.statistics()};
 }
 
-function wodinRunDDE(model: OdinModelDDE, tStart: number, tEnd: number,
+function runModelDDE(model: OdinModelDDE, tStart: number, tEnd: number,
                      control: any) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[],
@@ -87,15 +87,6 @@ function wodinRunDDE(model: OdinModelDDE, tStart: number, tEnd: number,
     const y0 = model.initial(tStart);
     const solver = new dopri.DDE(rhs, y0.length, control, output);
     solver.initialise(tStart, y0);
-    return solver.run(tEnd);
-}
-
-export function grid(a: number, b: number, len: number) {
-    const dx = (b - a) / (len - 1);
-    const x = [];
-    for (let i = 0; i < len - 1; ++i) {
-        x.push(a + i * dx);
-    }
-    x.push(b);
-    return x;
+    return {solution: solver.run(tEnd),
+            statistics: solver.statistics()};
 }

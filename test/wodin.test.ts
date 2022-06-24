@@ -1,4 +1,4 @@
-import {grid, wodinRun} from "../src/runner";
+import {grid, wodinRun} from "../src/wodin";
 import * as models from "./models";
 import {approxEqualArray} from "./helpers";
 
