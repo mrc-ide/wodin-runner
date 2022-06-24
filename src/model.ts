@@ -37,15 +37,16 @@ export function isODEModel(model: OdinModel): model is OdinModelODE {
 
 export type OdinModel = OdinModelODE | OdinModelDDE;
 
-export function runModel(model: OdinModel, tStart: number, tEnd: number,
+export function runModel(model: OdinModel, y0: number[] | null,
+                         tStart: number, tEnd: number,
                          control: any) {
     return isDDEModel(model) ?
-        runModelDDE(model as OdinModelDDE, tStart, tEnd, control) :
-        runModelODE(model as OdinModelODE, tStart, tEnd, control);
+        runModelDDE(model as OdinModelDDE, y0, tStart, tEnd, control) :
+        runModelODE(model as OdinModelODE, y0, tStart, tEnd, control);
 }
 
-function runModelODE(model: OdinModelODE, tStart: number, tEnd: number,
-                     control: any) {
+function runModelODE(model: OdinModelODE, y0: number[] | null,
+                     tStart: number, tEnd: number, control: any) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[]) {
         model.rhs(t, y, dydt);
@@ -61,15 +62,17 @@ function runModelODE(model: OdinModelODE, tStart: number, tEnd: number,
         output = (t: number, y: number[]) => (model.output as Function)(t, y);
     }
 
-    const y0 = model.initial(tStart);
+    if (y0 === null) {
+        y0 = model.initial(tStart);
+    }
     const solver = new dopri.Dopri(rhs, y0.length, control, output);
     solver.initialise(tStart, y0);
     return {solution: solver.run(tEnd),
             statistics: solver.statistics()};
 }
 
-function runModelDDE(model: OdinModelDDE, tStart: number, tEnd: number,
-                     control: any) {
+function runModelDDE(model: OdinModelDDE, y0: number[] | null,
+                     tStart: number, tEnd: number, control: any) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[],
                          solution: Solution) {
@@ -84,7 +87,9 @@ function runModelDDE(model: OdinModelDDE, tStart: number, tEnd: number,
             (model.output as Function)(t, y, solution);
     }
 
-    const y0 = model.initial(tStart);
+    if (y0 === null) {
+        y0 = model.initial(tStart);
+    }
     const solver = new dopri.DDE(rhs, y0.length, control, output);
     solver.initialise(tStart, y0);
     return {solution: solver.run(tEnd),

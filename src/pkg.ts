@@ -39,10 +39,10 @@ export class PkgWrapper {
         return this.model.getInternal();
     }
 
-    public run(t: number[], y0: number[], control: any) {
+    public run(t: number[], y0: number[] | null, control: any) {
         const tStart = t[0];
         const tEnd = t[t.length - 1];
-        const result = runModel(this.model, tStart, tEnd, control);
+        const result = runModel(this.model, y0, tStart, tEnd, control);
         return {names: this.model.names(),
                 statistics: result.statistics,
                 y: result.solution(t)};

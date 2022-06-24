@@ -14,7 +14,7 @@ describe("wrapper", () => {
         expect(mod.getMetadata()).toEqual({});
         const internal = mod.getInternal();
         expect(internal.a).toEqual(1);
-        const result = mod.run([0, 1, 2, 3], [1], control);
+        const result = mod.run([0, 1, 2, 3], null, control);
         expect(result.y).toEqual([[1], [2], [3], [4]]);
         expect(result.names).toEqual(["x"]);
         expect(result.statistics.nEval).toBeGreaterThan(10);
@@ -34,4 +34,16 @@ describe("wrapper", () => {
         expect(() => mod.rhs(0, [0])).toThrow(
             "Can't use rhs() with delay models");
     });
+
+    it("Can override the initial conditions", () => {
+        const user = new Map<string, number>();
+        const control : any = {};
+        const mod = new PkgWrapper(models.Minimal, user, "error");
+
+        const t = [0, 1, 2, 3, 4]
+        const result = mod.run(t, [2], control);
+
+        const y = result.y.map((el: number[]) => el[0]);
+        expect(approxEqualArray(y, [2, 3, 4, 5, 6])).toBe(true);
+    })
 });
