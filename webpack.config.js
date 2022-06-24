@@ -16,8 +16,8 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        library: 'wodinRunner',
-        filename: 'wodin-runner.js',
+        library: 'odin',
+        filename: 'odin.js',
         path: path.resolve(__dirname, 'dist'),
     },
 };
