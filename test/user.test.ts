@@ -55,6 +55,12 @@ describe("setUserScalar", () => {
         setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
     });
 
+    it("Can fall back on value within internal if missing", () => {
+        const internal = {d: 10} as InternalStorage;
+        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
+        expect(internal["d"]).toEqual(10);
+    });
+
     it("Can validate that the provided value satisfies constraints", () => {
         const internal = {} as InternalStorage;
         setUserScalar(pars, "a", internal, null, 0, 2, false);
@@ -163,6 +169,13 @@ describe("setUserArrayFixed", () => {
             pars, "x", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("'x' must not contain any NA values");
     });
+
+    it("Can fall back on existing values", () => {
+        const internal = {x: [10, 11, 12]} as InternalStorage;
+        setUserArrayFixed(pars, "x", internal, [3, 3],
+                          -Infinity, Infinity, false);
+        expect(internal["x"]).toEqual([10, 11, 12]);
+    });
 });
 
 describe("setUserArrayFixed", () => {
@@ -187,5 +200,12 @@ describe("setUserArrayFixed", () => {
         expect(() => setUserArrayVariable(
             pars, "x", internal, size, -Infinity, Infinity, false))
             .toThrow("Expected a value for 'x'");
+    });
+
+    it("Can fall back on existing values", () => {
+        const internal = {x: [10, 11, 12]} as InternalStorage;
+        setUserArrayVariable(pars, "x", internal, [3, 3],
+                          -Infinity, Infinity, false);
+        expect(internal["x"]).toEqual([10, 11, 12]);
     });
 });
