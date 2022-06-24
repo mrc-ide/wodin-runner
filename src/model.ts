@@ -94,7 +94,7 @@ function runModelDDE(model: OdinModelDDE, y0: number[] | null,
     }
 
     const internal = model.getInternal();
-    internal["initial_t"] = tStart;
+    internal.initial_t = tStart;
 
     const solver = new dopri.DDE(rhs, y0.length, control, output);
     solver.initialise(tStart, y0);
