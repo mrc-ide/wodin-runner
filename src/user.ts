@@ -61,7 +61,7 @@ export function getUserArrayFixed(user: UserType, name: string,
     let value = user.get(name);
     if (value === undefined) {
         // TODO: pull value out of internals
-        throw Error("Expected a value for '" + name + "'");
+        throw Error(`Expected a value for '${name}'`);
     } else {
         const rank = size.length - 1;
         value = getUserArrayCheckType(value, name);
