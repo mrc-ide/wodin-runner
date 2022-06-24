@@ -42,7 +42,7 @@ export function delay(solution: Solution, t: number, index: number[],
 
 export const base = {checkUser: userHelpers.checkUser,
                      delay,
-                     getUserScalar: userHelpers.getUserScalar};
+                     setUserScalar: userHelpers.setUserScalar};
 
 // tslint:disable-next-line:variable-name
 export function wodinRun(Model: OdinModelConstructable, pars: UserType,

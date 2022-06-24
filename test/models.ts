@@ -106,7 +106,7 @@ export class User {
     setUser(user, unusedUserAction) {
         const internal = this.internal;
         this.base.checkUser(user, ["a"], unusedUserAction);
-        this.base.getUserScalar(user, "a", internal, 1,
+        this.base.setUserScalar(user, "a", internal, 1,
                                 -Infinity, Infinity, false);
         this.updateMetadata();
     }
@@ -156,7 +156,7 @@ export class Output {
     setUser(user, unusedUserAction) {
         var internal = this.internal;
         this.base.checkUser(user, ["a"], unusedUserAction);
-        this.base.getUserScalar(user, "a", internal, 1,
+        this.base.setUserScalar(user, "a", internal, 1,
                                 -Infinity, Infinity, false);
         this.updateMetadata();
     }

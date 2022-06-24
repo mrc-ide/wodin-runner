@@ -1,4 +1,4 @@
-import {InternalStorage, UserTensor, UserValue, checkUser, getUserScalar, getUserArrayFixed, getUserArrayVariable} from "../src/user";
+import {InternalStorage, UserTensor, UserValue, checkUser, setUserScalar, setUserArrayFixed, setUserArrayVariable} from "../src/user";
 
 describe("checkUser", () => {
     const pars = new Map<string, UserValue>([["a", 1], ["b", 2], ["c", 3]]);
@@ -40,44 +40,44 @@ describe("checkUser", () => {
     })
 });
 
-describe("getUserScalar", () => {
+describe("setUserScalar", () => {
     const pars = new Map<string, UserValue>([["a", 1], ["b", 2.5], ["c", 3]]);
     it("Can retrieve a user value", () => {
         const internal = {} as InternalStorage;
-        getUserScalar(pars, "a", internal, null, -Infinity, Infinity, false);
+        setUserScalar(pars, "a", internal, null, -Infinity, Infinity, false);
         expect(internal["a"]).toEqual(1);
     });
 
     it("Can fall back on default value, erroring if unavailable", () => {
         const internal = {} as InternalStorage;
-        getUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
+        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
         expect(internal["d"]).toEqual(1);
-        expect(() => getUserScalar(pars, "d", internal, null, -Infinity, Infinity, false))
+        expect(() => setUserScalar(pars, "d", internal, null, -Infinity, Infinity, false))
             .toThrow("Expected a value for 'd'");
     });
 
     it("Can validate that the provided value satisfies constraints", () => {
         const internal = {} as InternalStorage;
-        getUserScalar(pars, "a", internal, null, 0, 2, false);
+        setUserScalar(pars, "a", internal, null, 0, 2, false);
         expect(internal["a"]).toEqual(1);
-        expect(() => getUserScalar(pars, "a", internal, null, 2, 4, false))
+        expect(() => setUserScalar(pars, "a", internal, null, 2, 4, false))
             .toThrow("Expected 'a' to be at least 2");
-        expect(() => getUserScalar(pars, "a", internal, null, -2, 0, false))
+        expect(() => setUserScalar(pars, "a", internal, null, -2, 0, false))
             .toThrow("Expected 'a' to be at most 0");
-        expect(() => getUserScalar(pars, "b", internal, null, -Infinity, Infinity, true))
+        expect(() => setUserScalar(pars, "b", internal, null, -Infinity, Infinity, true))
             .toThrow("Expected 'b' to be integer-like");
     });
 
     it("Errors if given something other than a number", () => {
         const pars = new Map<string, UserValue>([["a", [1, 2, 3]]]);
         const internal = {} as InternalStorage;
-        expect(() => getUserScalar(
+        expect(() => setUserScalar(
             pars, "a", internal, null, -Infinity, Infinity, false))
             .toThrow("Expected a scalar for 'a'");
     });
 });
 
-describe("getUserArrayFixed", () => {
+describe("setUserArrayFixed", () => {
     const pars = new Map<string, UserValue>([
         ["a", 1],
         ["b", [1, 2, 3]],
@@ -87,70 +87,70 @@ describe("getUserArrayFixed", () => {
     ]);
     it("Can retrieve a user array from a scalar", () => {
         const internal = {} as InternalStorage;
-        getUserArrayFixed(pars, "a", internal, [1, 1],
+        setUserArrayFixed(pars, "a", internal, [1, 1],
                           -Infinity, Infinity, false);
         expect(internal["a"]).toEqual([1]);
     });
     it("Can retrieve a user array from an array", () => {
         const internal = {} as InternalStorage;
-        getUserArrayFixed(pars, "b", internal, [3, 3],
+        setUserArrayFixed(pars, "b", internal, [3, 3],
                           -Infinity, Infinity, false);
         expect(internal["b"]).toEqual([1, 2, 3]);
     });
     it("Can retrieve a user array from a tensor", () => {
         const internal = {} as InternalStorage;
-        getUserArrayFixed(pars, "c", internal, [3, 3],
+        setUserArrayFixed(pars, "c", internal, [3, 3],
                           -Infinity, Infinity, false);
         expect(internal["c"]).toEqual([1, 2, 3]);
     });
     it("Can retrieve a user matrix from a tensor", () => {
         const internal = {} as InternalStorage;
-        getUserArrayFixed(pars, "d", internal, [6, 2, 3],
+        setUserArrayFixed(pars, "d", internal, [6, 2, 3],
                           -Infinity, Infinity, false);
         expect(internal["d"]).toEqual([1, 2, 3, 4, 5, 6]);
     });
     it("Can retrieve a user 3d array from a tensor", () => {
         const internal = {} as InternalStorage;
-        getUserArrayFixed(pars, "e", internal, [12, 2, 3, 2],
+        setUserArrayFixed(pars, "e", internal, [12, 2, 3, 2],
                           -Infinity, Infinity, false);
         expect(internal["e"]).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     });
     it("Errors if a value is not found", () => {
         const internal = {} as InternalStorage;
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "x", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("Expected a value for 'x'");
     });
     it("Errors if provided with the wrong rank", () => {
         const internal = {} as InternalStorage;
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "d", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("Expected a numeric vector for 'd'");
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "c", internal, [6, 2, 3], -Infinity, Infinity, false))
             .toThrow("Expected a numeric matrix for 'c'");
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "d", internal, [12, 2, 3, 2], -Infinity, Infinity, false))
             .toThrow("Expected a numeric array of rank 3 for 'd'");
     });
     it("Errors if provided with the wrong size", () => {
         const internal = {} as InternalStorage;
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "b", internal, [4, 4], -Infinity, Infinity, false))
             .toThrow("Expected length 4 value for 'b'");
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "d", internal, [10, 2, 5], -Infinity, Infinity, false))
             .toThrow("Incorrect size of dimension 2 of 'd' (expected 5)");
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "d", internal, [12, 4, 3], -Infinity, Infinity, false))
             .toThrow("Incorrect size of dimension 1 of 'd' (expected 4)");
     });
     it("Errors if values are out of range", () => {
         const internal = {} as InternalStorage;
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "c", internal, [3, 3], 2, Infinity, false))
             .toThrow("Expected 'c' to be at least 2");
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "c", internal, [3, 3], -Infinity, 2, false))
             .toThrow("Expected 'c' to be at most 2");
     });
@@ -160,13 +160,13 @@ describe("getUserArrayFixed", () => {
         const pars = new Map<string, UserValue>([
             ["x", {data: [1, 2, null as any], dim: [3]}]
         ]);
-        expect(() => getUserArrayFixed(
+        expect(() => setUserArrayFixed(
             pars, "x", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("'x' must not contain any NA values");
     });
 });
 
-describe("getUserArrayFixed", () => {
+describe("setUserArrayFixed", () => {
     const pars = new Map<string, UserValue>([
         ["a", 1],
         ["b", [1, 2, 3]],
@@ -177,7 +177,7 @@ describe("getUserArrayFixed", () => {
     it("Can fetch a variable and save sizes", () => {
         const size = [0, 0, 0];
         const internal = {} as InternalStorage;
-        getUserArrayVariable(pars, "d", internal, size,
+        setUserArrayVariable(pars, "d", internal, size,
                              -Infinity, Infinity, false);
         expect(internal.d).toEqual([1, 2, 3, 4, 5, 6]);
         expect(size).toEqual([6, 2, 3]);
@@ -185,7 +185,7 @@ describe("getUserArrayFixed", () => {
     it("Errors if a value is not found", () => {
         const internal = {} as InternalStorage;
         const size = [0, 0];
-        expect(() => getUserArrayVariable(
+        expect(() => setUserArrayVariable(
             pars, "x", internal, size, -Infinity, Infinity, false))
             .toThrow("Expected a value for 'x'");
     });

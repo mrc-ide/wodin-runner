@@ -31,7 +31,7 @@ export function checkUser(user: UserType, allowed: string[],
     }
 }
 
-export function getUserScalar(user: UserType, name: string,
+export function setUserScalar(user: UserType, name: string,
                               internal: InternalStorage,
                               defaultValue: number | null, min: number,
                               max: number, isInteger: boolean) {
@@ -47,12 +47,12 @@ export function getUserScalar(user: UserType, name: string,
         if (typeof value !== "number") {
             throw Error(`Expected a scalar for '${name}'`);
         }
-        getUserCheckValue(value, min, max, isInteger, name);
+        setUserCheckValue(value, min, max, isInteger, name);
         internal[name] = value;
     }
 }
 
-export function getUserArrayFixed(user: UserType, name: string,
+export function setUserArrayFixed(user: UserType, name: string,
                                   internal: InternalStorage,
                                   size: number[],
                                   min: number,
@@ -64,10 +64,10 @@ export function getUserArrayFixed(user: UserType, name: string,
         throw Error(`Expected a value for '${name}'`);
     } else {
         const rank = size.length - 1;
-        value = getUserArrayCheckType(value, name);
-        getUserArrayCheckRank(rank, value, name);
-        getUserArrayCheckDimension(size, value, name);
-        getUserArrayCheckContents(value, min, max, isInteger, name);
+        value = setUserArrayCheckType(value, name);
+        setUserArrayCheckRank(rank, value, name);
+        setUserArrayCheckDimension(size, value, name);
+        setUserArrayCheckContents(value, min, max, isInteger, name);
         internal[name] = value.data.slice();
     }
 }
@@ -81,7 +81,7 @@ export function getUserArrayFixed(user: UserType, name: string,
 // back into the size variable. odin will then generate code that sets
 // the appropriate sizes into 'internal' later - we might move that
 // into here later.
-export function getUserArrayVariable(user: UserType, name: string,
+export function setUserArrayVariable(user: UserType, name: string,
                                      internal: InternalStorage,
                                      size: number[],
                                      min: number,
@@ -92,9 +92,9 @@ export function getUserArrayVariable(user: UserType, name: string,
         throw Error("Expected a value for '" + name + "'");
     } else {
         const rank = size.length - 1;
-        value = getUserArrayCheckType(value, name);
-        getUserArrayCheckRank(rank, value, name);
-        getUserArrayCheckContents(value, min, max, isInteger, name);
+        value = setUserArrayCheckType(value, name);
+        setUserArrayCheckRank(rank, value, name);
+        setUserArrayCheckContents(value, min, max, isInteger, name);
         size[0] = value.data.length;
         for (let i = 0; i < rank; ++i) {
             size[i + 1] = value.dim[i];
@@ -103,7 +103,7 @@ export function getUserArrayVariable(user: UserType, name: string,
     }
 }
 
-function getUserArrayCheckType(value: UserValue, name: string) {
+function setUserArrayCheckType(value: UserValue, name: string) {
     if (Array.isArray(value)) {
         value = {data: value, dim: [value.length]};
     } else if (typeof value === "number") {
@@ -115,7 +115,7 @@ function getUserArrayCheckType(value: UserValue, name: string) {
     return value;
 }
 
-function getUserArrayCheckRank(rank: number, value: UserTensor, name: string) {
+function setUserArrayCheckRank(rank: number, value: UserTensor, name: string) {
     if (value.dim.length !== rank) {
         if (rank === 1) {
             throw Error(`Expected a numeric vector for '${name}'`);
@@ -127,7 +127,7 @@ function getUserArrayCheckRank(rank: number, value: UserTensor, name: string) {
     }
 }
 
-function getUserArrayCheckDimension(dim: number[], value: UserTensor,
+function setUserArrayCheckDimension(dim: number[], value: UserTensor,
                                     name: string) {
     const rank = dim.length - 1;
     for (let i = 0; i < rank; ++i) {
@@ -142,16 +142,16 @@ function getUserArrayCheckDimension(dim: number[], value: UserTensor,
     }
 }
 
-function getUserArrayCheckContents(value: UserTensor, min: number, max: number, isInteger: boolean, name: string) {
+function setUserArrayCheckContents(value: UserTensor, min: number, max: number, isInteger: boolean, name: string) {
     for (const x of value.data) {
         if (x === null) {
             throw Error(`'${name}' must not contain any NA values`);
         }
-        getUserCheckValue(x, min, max, isInteger, name);
+        setUserCheckValue(x, min, max, isInteger, name);
     }
 }
 
-function getUserCheckValue(value: number, min: number, max: number, isInteger: boolean, name: string) {
+function setUserCheckValue(value: number, min: number, max: number, isInteger: boolean, name: string) {
     if (value < min) {
         throw Error(`Expected '${name}' to be at least ${min}`);
     }
