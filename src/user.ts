@@ -37,15 +37,16 @@ export function setUserScalar(user: UserType, name: string,
                               max: number, isInteger: boolean) {
     const value = user.get(name);
     if (value === undefined) {
-        // TODO: pull values out of internals
+        if (internal[name] !== undefined) {
+            return;
+        }
         if (defaultValue === null) {
             throw Error(`Expected a value for '${name}'`);
-        } else {
-            internal[name] = defaultValue;
         }
+        internal[name] = defaultValue;
     } else {
         if (typeof value !== "number") {
-            throw Error(`Expected a scalar for '${name}'`);
+            throw Error(`Expected a number for '${name}'`);
         }
         setUserCheckValue(value, min, max, isInteger, name);
         internal[name] = value;
@@ -60,7 +61,9 @@ export function setUserArrayFixed(user: UserType, name: string,
                                   isInteger: boolean) {
     let value = user.get(name);
     if (value === undefined) {
-        // TODO: pull value out of internals
+        if (internal[name] !== undefined) {
+            return;
+        }
         throw Error(`Expected a value for '${name}'`);
     } else {
         const rank = size.length - 1;
@@ -89,6 +92,9 @@ export function setUserArrayVariable(user: UserType, name: string,
                                      isInteger: boolean) {
     let value = user.get(name);
     if (value === undefined) {
+        if (internal[name] !== undefined) {
+            return;
+        }
         throw Error("Expected a value for '" + name + "'");
     } else {
         const rank = size.length - 1;
@@ -152,6 +158,10 @@ function setUserArrayCheckContents(value: UserTensor, min: number, max: number, 
 }
 
 function setUserCheckValue(value: number, min: number, max: number, isInteger: boolean, name: string) {
+    // This exists to make the plain js interface more robust
+    if (typeof value !== "number") {
+        throw Error(`Expected a number for '${name}'`);
+    }
     if (value < min) {
         throw Error(`Expected '${name}' to be at least ${min}`);
     }

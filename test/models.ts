@@ -23,6 +23,17 @@ export class Minimal {
     names() {
         return ["x"];
     }
+
+    getMetadata() {
+        return {};
+    }
+
+    getInternal() {
+        return this.internal;
+    }
+
+    setUser(user, unusedUserAction) {
+    }
 }
 
 // @ts-nocheck
@@ -67,6 +78,17 @@ export class Delay {
     names() {
         return ["x", "y"];
     }
+
+    getMetadata() {
+        return {};
+    }
+
+    getInternal() {
+        return this.internal;
+    }
+
+    setUser(user, unusedUserAction) {
+    }
 }
 
 // @ts-nocheck
@@ -105,10 +127,18 @@ export class User {
 
     setUser(user, unusedUserAction) {
         const internal = this.internal;
-        this.base.checkUser(user, ["a"], unusedUserAction);
-        this.base.setUserScalar(user, "a", internal, 1,
-                                -Infinity, Infinity, false);
+        this.base.user.checkUser(user, ["a"], unusedUserAction);
+        this.base.user.setUserScalar(user, "a", internal, 1,
+                                     -Infinity, Infinity, false);
         this.updateMetadata();
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+
+    getInternal() {
+        return this.internal;
     }
 }
 
@@ -155,10 +185,18 @@ export class Output {
 
     setUser(user, unusedUserAction) {
         var internal = this.internal;
-        this.base.checkUser(user, ["a"], unusedUserAction);
-        this.base.setUserScalar(user, "a", internal, 1,
-                                -Infinity, Infinity, false);
+        this.base.user.checkUser(user, ["a"], unusedUserAction);
+        this.base.user.setUserScalar(user, "a", internal, 1,
+                                     -Infinity, Infinity, false);
         this.updateMetadata();
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+
+    getInternal() {
+        return this.internal;
     }
 }
 
@@ -206,11 +244,19 @@ export class DelayNoOutput {
     }
 
     setUser(user, unusedUserAction) {
-        this.base.checkUser(user, [], unusedUserAction);
+        this.base.user.checkUser(user, [], unusedUserAction);
         this.updateMetadata();
     }
 
     names() {
         return this.metadata.ynames.slice(1);
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+
+    getInternal() {
+        return this.internal;
     }
 }

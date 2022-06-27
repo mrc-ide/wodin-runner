@@ -50,10 +50,15 @@ describe("setUserScalar", () => {
 
     it("Can fall back on default value, erroring if unavailable", () => {
         const internal = {} as InternalStorage;
-        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
-        expect(internal["d"]).toEqual(1);
         expect(() => setUserScalar(pars, "d", internal, null, -Infinity, Infinity, false))
             .toThrow("Expected a value for 'd'");
+        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
+    });
+
+    it("Can fall back on value within internal if missing", () => {
+        const internal = {d: 10} as InternalStorage;
+        setUserScalar(pars, "d", internal, 1, -Infinity, Infinity, false);
+        expect(internal["d"]).toEqual(10);
     });
 
     it("Can validate that the provided value satisfies constraints", () => {
@@ -73,7 +78,7 @@ describe("setUserScalar", () => {
         const internal = {} as InternalStorage;
         expect(() => setUserScalar(
             pars, "a", internal, null, -Infinity, Infinity, false))
-            .toThrow("Expected a scalar for 'a'");
+            .toThrow("Expected a number for 'a'");
     });
 });
 
@@ -164,9 +169,26 @@ describe("setUserArrayFixed", () => {
             pars, "x", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("'x' must not contain any NA values");
     });
+
+    it("Errors if given non-numeric data", () => {
+        const internal = {} as InternalStorage;
+        const pars = new Map<string, UserValue>([
+            ["x", {data: [1, 2, "three" as any], dim: [3]}]
+        ]);
+        expect(() => setUserArrayFixed(
+            pars, "x", internal, [3, 3], -Infinity, Infinity, false))
+            .toThrow("Expected a number for 'x'");
+    });
+
+    it("Can fall back on existing values", () => {
+        const internal = {x: [10, 11, 12]} as InternalStorage;
+        setUserArrayFixed(pars, "x", internal, [3, 3],
+                          -Infinity, Infinity, false);
+        expect(internal["x"]).toEqual([10, 11, 12]);
+    });
 });
 
-describe("setUserArrayFixed", () => {
+describe("setUserArrayVariable", () => {
     const pars = new Map<string, UserValue>([
         ["a", 1],
         ["b", [1, 2, 3]],
@@ -188,5 +210,12 @@ describe("setUserArrayFixed", () => {
         expect(() => setUserArrayVariable(
             pars, "x", internal, size, -Infinity, Infinity, false))
             .toThrow("Expected a value for 'x'");
+    });
+
+    it("Can fall back on existing values", () => {
+        const internal = {x: [10, 11, 12]} as InternalStorage;
+        setUserArrayVariable(pars, "x", internal, [3, 3],
+                          -Infinity, Infinity, false);
+        expect(internal["x"]).toEqual([10, 11, 12]);
     });
 });
