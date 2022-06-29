@@ -34,7 +34,7 @@ export interface OdinModelODE {
     /**  Set parameters into an existing model.
      *
      * @param pars New parameters for the model. Values are are
-     * ommitted here but present in the model will be unchanged.
+     * omitted here but present in the model will be unchanged.
      *
      * @param unusedUserAction String, describing the action to take
      * if there are unknown values in `pars` - possible values are
@@ -93,7 +93,7 @@ export interface OdinModelDDE {
     /**  Set parameters into an existing model.
      *
      * @param pars New parameters for the model. Values are are
-     * ommitted here but present in the model will be unchanged.
+     * omitted here but present in the model will be unchanged.
      *
      * @param unusedUserAction String, describing the action to take
      * if there are unknown values in `pars` - possible values are

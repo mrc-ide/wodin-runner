@@ -6,7 +6,7 @@ function roundHalfToEven(x: number) {
     }
 }
 
-/** Round a number. This function diffes from `Math.round` in two
+/** Round a number. This function differs from `Math.round` in two
  * respects - it can round to a number of digits with the optional
  * `digits` argument:
  *

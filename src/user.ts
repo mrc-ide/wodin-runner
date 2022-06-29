@@ -98,12 +98,12 @@ export function checkUser(pars: UserType, allowed: string[],
  * parameter is required
  *
  * @param min The minimum allowed value for the parameter; use
- * `-Infinity` there is no minimum
+ * `-Infinity` if there is no minimum
  *
  * @param max The maximum allowed value for the parameter; use
- * `Infinity` there is no maximum
+ * `Infinity` if there is no maximum
  *
- * @param isInteger Check that the provided value is a parameter
+ * @param isInteger Check that the provided value is an integer```
  */
 export function setUserScalar(pars: UserType, name: string,
                               internal: InternalStorage,
@@ -148,7 +148,7 @@ export function setUserScalar(pars: UserType, name: string,
  * @param max The maximum allowed value for the parameter; use
  * `Infinity` there is no maximum
  *
- * @param isInteger Check that the provided value is a parameter
+ * @param isInteger Check that the provided value is an integer
  */
 export function setUserArrayFixed(pars: UserType, name: string,
                                   internal: InternalStorage,
