@@ -1,3 +1,5 @@
+import type { DopriControlParam } from "dopri";
+
 import type { OdinModelConstructable, Solution } from "./model";
 import {base, runModel} from "./model";
 import type { UserType } from "./user";
@@ -5,7 +7,7 @@ import type { UserType } from "./user";
 // tslint:disable-next-line:variable-name
 export function wodinRun(Model: OdinModelConstructable, pars: UserType,
                          tStart: number, tEnd: number,
-                         control: any) {
+                         control: Partial<DopriControlParam>) {
     const model = new Model(base, pars, "error");
     const y0 = null;
     const solution = runModel(model, y0, tStart, tEnd, control).solution;

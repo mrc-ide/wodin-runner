@@ -1,4 +1,5 @@
 import * as dopri from "dopri";
+import type { DopriControlParam } from "dopri";
 
 // Can't use export * as base shorthand here
 import * as base from "./base";
@@ -47,14 +48,15 @@ export type OdinModel = OdinModelODE | OdinModelDDE;
 
 export function runModel(model: OdinModel, y0: number[] | null,
                          tStart: number, tEnd: number,
-                         control: any) {
+                         control: Partial<DopriControlParam>) {
     return isDDEModel(model) ?
         runModelDDE(model as OdinModelDDE, y0, tStart, tEnd, control) :
         runModelODE(model as OdinModelODE, y0, tStart, tEnd, control);
 }
 
 function runModelODE(model: OdinModelODE, y0: number[] | null,
-                     tStart: number, tEnd: number, control: any) {
+                     tStart: number, tEnd: number,
+                     control: Partial<DopriControlParam>) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[]) {
         model.rhs(t, y, dydt);
@@ -80,7 +82,8 @@ function runModelODE(model: OdinModelODE, y0: number[] | null,
 }
 
 function runModelDDE(model: OdinModelDDE, y0: number[] | null,
-                     tStart: number, tEnd: number, control: any) {
+                     tStart: number, tEnd: number,
+                     control: Partial<DopriControlParam>) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[],
                          solution: Solution) {
