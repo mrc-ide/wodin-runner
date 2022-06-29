@@ -1,5 +1,11 @@
 import * as dopri from "dopri";
 
+// Can't use export * as base shorthand here
+import * as base from "./base";
+export {base};
+
+export type BaseType = typeof base;
+
 import {InternalStorage, UserType} from "./user";
 
 // Probably this is something that dopri should export for us, we
@@ -7,7 +13,7 @@ import {InternalStorage, UserType} from "./user";
 export type Solution = (t: number) => number[];
 
 export type OdinModelConstructable =
-    new(base: any, pars: UserType, unknownAction: string) => OdinModel;
+    new(base: BaseType, pars: UserType, unknownAction: string) => OdinModel;
 
 interface OdinModelODE {
     setUser(pars: UserType, unknownAction: string): void;

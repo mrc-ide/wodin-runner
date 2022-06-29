@@ -1,6 +1,5 @@
-import * as base from "./base";
 import type { OdinModel, OdinModelConstructable, Solution } from "./model";
-import {isODEModel, runModel} from "./model";
+import {base, isODEModel, runModel} from "./model";
 import type { UserType } from "./user";
 
 export class PkgWrapper {

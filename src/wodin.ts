@@ -1,6 +1,5 @@
-import * as base from "./base";
 import type { OdinModelConstructable, Solution } from "./model";
-import {runModel} from "./model";
+import {base, runModel} from "./model";
 import type { UserType } from "./user";
 
 // tslint:disable-next-line:variable-name
