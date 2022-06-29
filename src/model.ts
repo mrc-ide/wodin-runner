@@ -1,4 +1,7 @@
 import * as dopri from "dopri";
+import type { DopriControlParam } from "dopri";
+
+import {base, BaseType} from "./base";
 
 import {InternalStorage, UserType} from "./user";
 
@@ -7,7 +10,7 @@ import {InternalStorage, UserType} from "./user";
 export type Solution = (t: number) => number[];
 
 export type OdinModelConstructable =
-    new(base: any, pars: UserType, unknownAction: string) => OdinModel;
+    new(base: BaseType, pars: UserType, unknownAction: string) => OdinModel;
 
 interface OdinModelODE {
     setUser(pars: UserType, unknownAction: string): void;
@@ -41,14 +44,15 @@ export type OdinModel = OdinModelODE | OdinModelDDE;
 
 export function runModel(model: OdinModel, y0: number[] | null,
                          tStart: number, tEnd: number,
-                         control: any) {
+                         control: Partial<DopriControlParam>) {
     return isDDEModel(model) ?
         runModelDDE(model as OdinModelDDE, y0, tStart, tEnd, control) :
         runModelODE(model as OdinModelODE, y0, tStart, tEnd, control);
 }
 
 function runModelODE(model: OdinModelODE, y0: number[] | null,
-                     tStart: number, tEnd: number, control: any) {
+                     tStart: number, tEnd: number,
+                     control: Partial<DopriControlParam>) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[]) {
         model.rhs(t, y, dydt);
@@ -74,7 +78,8 @@ function runModelODE(model: OdinModelODE, y0: number[] | null,
 }
 
 function runModelDDE(model: OdinModelDDE, y0: number[] | null,
-                     tStart: number, tEnd: number, control: any) {
+                     tStart: number, tEnd: number,
+                     control: Partial<DopriControlParam>) {
     // tslint:disable-next-line:only-arrow-functions
     const rhs = function(t: number, y: number[], dydt: number[],
                          solution: Solution) {

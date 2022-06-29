@@ -1,4 +1,6 @@
-import * as base from "./base";
+import type { DopriControlParam } from "dopri";
+
+import { base } from "./base";
 import type { OdinModel, OdinModelConstructable, Solution } from "./model";
 import {isODEModel, runModel} from "./model";
 import type { UserType } from "./user";
@@ -43,7 +45,8 @@ export class PkgWrapper {
         this.model.setUser(pars, unusedUserAction);
     }
 
-    public run(t: number[], y0: number[] | null, control: any) {
+    public run(t: number[], y0: number[] | null,
+               control: Partial<DopriControlParam>) {
         const tStart = t[0];
         const tEnd = t[t.length - 1];
         const result = runModel(this.model, y0, tStart, tEnd, control);
