@@ -1,11 +1,7 @@
 import * as dopri from "dopri";
 import type { DopriControlParam } from "dopri";
 
-// Can't use export * as base shorthand here
-import * as base from "./base";
-export {base};
-
-export type BaseType = typeof base;
+import {base, BaseType} from "./base";
 
 import {InternalStorage, UserType} from "./user";
 

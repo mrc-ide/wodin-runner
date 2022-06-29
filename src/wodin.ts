@@ -1,7 +1,8 @@
 import type { DopriControlParam } from "dopri";
 
+import { base } from "./base";
 import type { OdinModelConstructable, Solution } from "./model";
-import {base, runModel} from "./model";
+import {runModel} from "./model";
 import type { UserType } from "./user";
 
 // tslint:disable-next-line:variable-name
