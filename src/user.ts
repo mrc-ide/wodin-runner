@@ -1,9 +1,47 @@
+/** Store vectors and multidimensional arrays. Rather than store a
+ *  matrix of data like
+ * ```typescript
+ * [[ 0,  1,  2,  3],
+ *  [ 4,  5,  6,  7],
+ *  [ 8,  9, 10, 11]]
+ * ```
+ * we store this as
+ *
+ * ```typescript
+ * {
+ *     data: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+ *     dim: [4, 3]
+ * }
+ * ```
+ *
+ * This is modelled on the way that odin stores matrices. In odin
+ * syntax, the element `m[2, 3]` has value 9.
+ */
 export interface UserTensor {
+    /** The data, as a single array */
     data: number[];
+    /** The dimensions as a relatively short array (length 1 to 3 for
+     *  odin-js curently, limited by support in sums)
+     */
     dim: number[];
 }
+
+/**
+ * Valid values that may be passed in within a {@link UserType} map
+ */
 export type UserValue = number | number[] | UserTensor;
+
+/**
+ * A key-value map of user-provided parameters
+ */
 export type UserType = Map<string, UserValue>;
+
+/**
+ * The data type corresponding to odin's internal data structures - a
+ * key-value mapping of name to numbers or vectors. Returned by {@link
+ * OdinModelODE.getInternal | OdinModelODE.getInternal} and not
+ * generally meant for end-user consumption except for in debugging.
+ */
 export type InternalStorage = Record<string, number | number[]>;
 
 export function checkUser(user: UserType, allowed: string[],
