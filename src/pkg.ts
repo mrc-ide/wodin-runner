@@ -7,7 +7,7 @@ import type { UserType } from "./user";
 
 /**
  * Wrapper class around an {@link OdinModel} designed to be driven
- * from the R package (https://github.com/mrc-ide/odin)
+ * from the [R package odin](https://github.com/mrc-ide/odin)
  */
 export class PkgWrapper {
     private model: OdinModel;
@@ -21,7 +21,6 @@ export class PkgWrapper {
      * if there are unknown values in `pars` - possible values are
      * "error", "ignore", "warning" and "message"
      */
-    // tslint:disable-next-line:variable-name
     constructor(Model: OdinModelConstructable, pars: UserType, unusedUserAction: string) {
         this.model = new Model(base, pars, unusedUserAction);
     }

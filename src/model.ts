@@ -60,7 +60,7 @@ export interface OdinModelODE {
      * variables.  Unlike {@link rhs}, this returns a vector rather
      * than writing in place. Not all models include an `output`
      * method - these models have no output.
-     * 
+     *
      * @param t The time to compute output at
      *
      * @param y The value of the variables
@@ -122,7 +122,7 @@ export interface OdinModelDDE {
      * variables.  Unlike {@link rhs}, this returns a vector rather
      * than writing in place. Not all models include an `output`
      * method - these models have no output.
-     * 
+     *
      * @param t The time to compute output at
      *
      * @param y The value of the variables
@@ -132,7 +132,7 @@ export interface OdinModelDDE {
      */
     output?(t: number, y: number[], solution: Solution): number[];
 
-    /** Return a vector of names of variables */    
+    /** Return a vector of names of variables */
     names(): string[];
 
     /**
@@ -160,8 +160,8 @@ export function isODEModel(model: OdinModel): model is OdinModelODE {
  * be an ordinary differential equation model ({@link OdinModelODE})
  * or a delay differential equation model ({@link
  * OdinModelDDE}). Later we will support discrete-time models here
- * too.  
-*/
+ * too.
+ */
 export type OdinModel = OdinModelODE | OdinModelDDE;
 
 export function runModel(model: OdinModel, y0: number[] | null,

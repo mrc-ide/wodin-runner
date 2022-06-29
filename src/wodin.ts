@@ -5,7 +5,6 @@ import type { OdinModelConstructable, Solution } from "./model";
 import {runModel} from "./model";
 import type { UserType } from "./user";
 
-// tslint:disable-next-line:variable-name
 export function wodinRun(Model: OdinModelConstructable, pars: UserType,
                          tStart: number, tEnd: number,
                          control: Partial<DopriControlParam>) {

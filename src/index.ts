@@ -7,5 +7,5 @@ export {
     OdinModelODE,
     OdinModelDDE,
     Solution,
-} from "./model"
-export {InternalStorage, UserTensor, UserType, UserValue} from "./user"
+} from "./model";
+export {InternalStorage, UserTensor, UserType, UserValue} from "./user";
