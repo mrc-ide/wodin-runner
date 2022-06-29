@@ -5,14 +5,16 @@ import {base, BaseType} from "./base";
 
 import {InternalStorage, UserType} from "./user";
 
-// Probably this is something that dopri should export for us, we
-// could also use its types for the rhs and output members below.
+/** Interpolated solution to the system of differential equations
+ *
+ *  @param t The time to look up the solution at
+ */
 export type Solution = (t: number) => number[];
 
 /**
  * Constructor for an {@link OdinModel}
  *
- * @param base TBD
+ * @param base The singleton object {@link base}
  *
  * @param pars Parameters to pass to the model
  *
@@ -21,7 +23,7 @@ export type Solution = (t: number) => number[];
  * "ignore", "warning" and "message"
  */
 export type OdinModelConstructable =
-    new(base: BaseType, pars: UserType, unknownAction: string) => OdinModel;
+    new(base: BaseType, pars: UserType, unusedUserAction: string) => OdinModel;
 
 /**
  * The interface that odin ordinary differential equation (ODE) models
@@ -38,7 +40,7 @@ export interface OdinModelODE {
      * if there are unknown values in `pars` - possible values are
      * "error", "ignore", "warning" and "message"
      */
-    setUser(pars: UserType, unknownAction: string): void;
+    setUser(pars: UserType, unusedUserAction: string): void;
 
     /** Get initial conditions from the model
      * @param t The time to compute initial conditions at
@@ -97,7 +99,7 @@ export interface OdinModelDDE {
      * if there are unknown values in `pars` - possible values are
      * "error", "ignore", "warning" and "message"
      */
-    setUser(pars: UserType, unknownAction: string): void;
+    setUser(pars: UserType, unusedUserAction: string): void;
 
     /** Get initial conditions from the model
      * @param t The time to compute initial conditions at

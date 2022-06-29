@@ -44,13 +44,26 @@ export type UserType = Map<string, UserValue>;
  */
 export type InternalStorage = Record<string, number | number[]>;
 
-export function checkUser(user: UserType, allowed: string[],
+/**
+ * Validate that a provided set of parameters `pars` contains only the
+ * values in `allowed`, handling this as requested by
+ * `unusedUserAction`
+ *
+ * @param pars User-provided parameters for the model
+ *
+ * @param allowed Names of allowed user parameters
+ *
+ * @param unusedUserAction String, describing the action to take
+ * if there are unknown values in `pars` - possible values are
+ * "error", "ignore", "warning" and "message"
+ */
+export function checkUser(pars: UserType, allowed: string[],
                           unusedUserAction: string) {
     if (unusedUserAction === "ignore") {
         return;
     }
     const err = [];
-    for (const k of user.keys()) {
+    for (const k of pars.keys()) {
         if (!allowed.includes(k)) {
             err.push(k);
         }
@@ -69,11 +82,34 @@ export function checkUser(user: UserType, allowed: string[],
     }
 }
 
-export function setUserScalar(user: UserType, name: string,
+/** Set a scalar parameter provided by the user. This function will
+ * throw if the parameter violates the constraint, or if none is
+ * provided and no default is given and no value for this parameter
+ * has previously been set.
+ *
+ * @param pars User-provided parameters for the model
+ *
+ * @param name Name of the parameter to set
+ *
+ * @param internal The model's internal data; the parameter will be
+ * updated here
+ *
+ * @param default A default value for the parameter, or `null` if the
+ * parameter is required
+ *
+ * @param min The minimum allowed value for the parameter; use
+ * `-Infinity` there is no minimum
+ *
+ * @param max The maximum allowed value for the parameter; use
+ * `Infinity` there is no maximum
+ *
+ * @param isInteger Check that the provided value is a parameter
+ */
+export function setUserScalar(pars: UserType, name: string,
                               internal: InternalStorage,
                               defaultValue: number | null, min: number,
                               max: number, isInteger: boolean) {
-    const value = user.get(name);
+    const value = pars.get(name);
     if (value === undefined) {
         if (internal[name] !== undefined) {
             return;
@@ -91,13 +127,36 @@ export function setUserScalar(user: UserType, name: string,
     }
 }
 
-export function setUserArrayFixed(user: UserType, name: string,
+/** Set an array parameter with known (fixed) size provided by the
+ * user. This function will throw if the parameter violates the
+ * constraint, or if none is provided and no value for this parameter
+ * has previously been set.
+ *
+ * @param pars User-provided parameters for the model
+ *
+ * @param name Name of the parameter to set
+ *
+ * @param size Array of dimension sizes; this must be a vector of `n +
+ * 1` values for a tensor of rank `n` (e.g., length 3 for a matrix),
+ * with the first value containing the total length of the vector and
+ * the remaining values being the length of each dimension. The first
+ * number will therefore be the product of the remaining numbers.
+ *
+ * @param min The minimum allowed value for the parameter; use
+ * `-Infinity` there is no minimum
+ *
+ * @param max The maximum allowed value for the parameter; use
+ * `Infinity` there is no maximum
+ *
+ * @param isInteger Check that the provided value is a parameter
+ */
+export function setUserArrayFixed(pars: UserType, name: string,
                                   internal: InternalStorage,
                                   size: number[],
                                   min: number,
                                   max: number,
                                   isInteger: boolean) {
-    let value = user.get(name);
+    let value = pars.get(name);
     if (value === undefined) {
         if (internal[name] !== undefined) {
             return;
@@ -113,22 +172,48 @@ export function setUserArrayFixed(user: UserType, name: string,
     }
 }
 
-// This one is used where we have
-//
-//   dim(x) <- user()
-//
-// which means that the extents are set based on the given array
-// (rather than some known value within size) and we report the values
-// back into the size variable. odin will then generate code that sets
-// the appropriate sizes into 'internal' later - we might move that
-// into here later.
-export function setUserArrayVariable(user: UserType, name: string,
+/** Set an array parameter with known (fixed) size provided by the
+ * user. This function will throw if the parameter violates the
+ * constraint, or if none is provided and no value for this parameter
+ * has previously been set.
+ *
+ * This is the method used where the odin model contains
+ *
+ * ```r
+ * x[, ] <- user()
+ * dim(x) <- user()
+ * ```
+ *
+ * which means that the extents are set based on the given array
+ * (rather than some known value within size) and we report the values
+ * back into the `size` variable and odin will then generate code that
+ * sets the appropriate sizes into `internal` later - we might move
+ * that into here later.
+ *
+ * @param pars User-provided parameters for the model
+ *
+ * @param name Name of the parameter to set
+ *
+ * @param size Array of dimension sizes; this must be a vector of `n +
+ * 1` values for a tensor of rank `n` (e.g., length 3 for a
+ * matrix). This array will be written into on return with the size of
+ * the recieved array.
+ *
+ * @param min The minimum allowed value for the parameter; use
+ * `-Infinity` there is no minimum
+ *
+ * @param max The maximum allowed value for the parameter; use
+ * `Infinity` there is no maximum
+ *
+ * @param isInteger Check that the provided value is a parameter
+ */
+export function setUserArrayVariable(pars: UserType, name: string,
                                      internal: InternalStorage,
                                      size: number[],
                                      min: number,
                                      max: number,
                                      isInteger: boolean) {
-    let value = user.get(name);
+    let value = pars.get(name);
     if (value === undefined) {
         if (internal[name] !== undefined) {
             return;
@@ -210,3 +295,10 @@ function setUserCheckValue(value: number, min: number, max: number, isInteger: b
         throw Error(`Expected '${name}' to be integer-like`);
     }
 }
+
+export const user = {
+    checkUser,
+    setUserArrayFixed,
+    setUserArrayVariable,
+    setUserScalar,
+};
