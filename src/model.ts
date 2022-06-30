@@ -5,31 +5,121 @@ import {base, BaseType} from "./base";
 
 import {InternalStorage, UserType} from "./user";
 
-// Probably this is something that dopri should export for us, we
-// could also use its types for the rhs and output members below.
+/** Interpolated solution to the system of differential equations
+ *
+ *  @param t The time to look up the solution at
+ */
 export type Solution = (t: number) => number[];
 
+/**
+ * Constructor for an {@link OdinModel}
+ *
+ * @param base The singleton object {@link base}
+ *
+ * @param pars Parameters to pass to the model
+ *
+ * @param unusedUserAction String, describing the action to take if
+ * there are unknown values in `pars` - possible values are "error",
+ * "ignore", "warning" and "message"
+ */
 export type OdinModelConstructable =
-    new(base: BaseType, pars: UserType, unknownAction: string) => OdinModel;
+    new(base: BaseType, pars: UserType, unusedUserAction: string) => OdinModel;
 
-interface OdinModelODE {
-    setUser(pars: UserType, unknownAction: string): void;
+/** Common interface for all odin models */
+export interface OdinModelBase {
+    /**  Set parameters into an existing model.
+     *
+     * @param pars New parameters for the model. Values are are
+     * omitted here but present in the model will be unchanged.
+     *
+     * @param unusedUserAction String, describing the action to take
+     * if there are unknown values in `pars` - possible values are
+     * "error", "ignore", "warning" and "message"
+     */
+    setUser(pars: UserType, unusedUserAction: string): void;
+
+    /** Get initial conditions from the model
+     * @param t The time to compute initial conditions at
+     */
     initial(t: number): number[];
-    rhs(t: number, y: number[], dydt: number[]): void;
-    output?(t: number, y: number[]): number[];
+
+    /** Return a vector of names of variables */
     names(): string[];
+
+    /**
+     * Return the state of the internal storage - odin uses this for
+     * debugging and testing.
+     */
     getInternal(): InternalStorage;
+
+    /**
+     * Return metadata about the model - odin uses this internally.
+     */
     getMetadata(): any;
 }
 
-interface OdinModelDDE {
-    setUser(pars: UserType, unknownAction: string): void;
-    initial(t: number): number[];
+/**
+ * The interface that odin ordinary differential equation (ODE) models
+ * will match, though they will be generated in plain JavaScript and
+ * not TypeScript.
+ */
+export interface OdinModelODE extends OdinModelBase {
+    /** Compute the derivatives
+     *
+     * @param t The time to compute initial conditions at
+     *
+     * @param y The value of the variables
+     *
+     * @param dydt An array *that will be written into*, will hold
+     * derivatives on exit. Must be the same length as `y`
+     */
+    rhs(t: number, y: number[], dydt: number[]): void;
+
+    /** Compute additional quantities that are derived from the
+     * variables.  Unlike {@link rhs}, this returns a vector rather
+     * than writing in place. Not all models include an `output`
+     * method - these models have no output.
+     *
+     * @param t The time to compute output at
+     *
+     * @param y The value of the variables
+     */
+    output?(t: number, y: number[]): number[];
+}
+
+/**
+ * The interface that odin delay differential equation (DDE) models
+ * will match, though they will be generated in plain JavaScript and
+ * not TypeScript.
+ */
+export interface OdinModelDDE extends OdinModelBase {
+    /** Compute the derivatives
+     *
+     * @param t The time to compute initial conditions at
+     *
+     * @param y The value of the variables
+     *
+     * @param dydt An array *that will be written into*, will hold
+     * derivatives on exit. Must be the same length as `y`
+     *
+     * @param solution The interpolated solution, which is used to
+     * compute delayed versions of variables
+     */
     rhs(t: number, y: number[], dydt: number[], solution: Solution): void;
+
+    /** Compute additional quantities that are derived from the
+     * variables.  Unlike {@link rhs}, this returns a vector rather
+     * than writing in place. Not all models include an `output`
+     * method - these models have no output.
+     *
+     * @param t The time to compute output at
+     *
+     * @param y The value of the variables
+     *
+     * @param solution The interpolated solution, which is used to
+     * compute delayed versions of variables
+     */
     output?(t: number, y: number[], solution: Solution): number[];
-    names(): string[];
-    getInternal(): InternalStorage;
-    getMetadata(): any;
 }
 
 export function isDDEModel(model: OdinModel): model is OdinModelDDE {
@@ -40,6 +130,13 @@ export function isODEModel(model: OdinModel): model is OdinModelODE {
     return model.rhs.length === 3;
 }
 
+/**
+ * Union type representing supported odin models - currently this may
+ * be an ordinary differential equation model ({@link OdinModelODE})
+ * or a delay differential equation model ({@link
+ * OdinModelDDE}). Later we will support discrete-time models here
+ * too.
+ */
 export type OdinModel = OdinModelODE | OdinModelDDE;
 
 export function runModel(model: OdinModel, y0: number[] | null,
