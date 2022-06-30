@@ -44,8 +44,6 @@ export function fitTarget(Model: OdinModelConstructable,
         const idxModel = names.indexOf(modelledSeries);
         const yModel = solution(data.time).map((y) => y[idxModel]);
 
-        // Unfortunately, TypeDoc does not copy all doc comments here
-        // over, so I've not documented them here.
         return {
             /** Additional data alongside the goodness of fit, see above */
             data: {
