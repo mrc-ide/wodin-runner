@@ -1,6 +1,7 @@
-export {wodinRun} from "./wodin";
+export {wodinFit, wodinRun} from "./wodin";
 export {PkgWrapper} from "./pkg";
 export {BaseType, base} from "./base";
+export {FitData, FitPars} from "./fit";
 export {
     OdinModelConstructable,
     OdinModel,
