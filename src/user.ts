@@ -103,7 +103,7 @@ export function checkUser(pars: UserType, allowed: string[],
  * @param max The maximum allowed value for the parameter; use
  * `Infinity` if there is no maximum
  *
- * @param isInteger Check that the provided value is an integer```
+ * @param isInteger Check that the provided value is an integer
  */
 export function setUserScalar(pars: UserType, name: string,
                               internal: InternalStorage,
