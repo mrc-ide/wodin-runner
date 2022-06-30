@@ -1,6 +1,6 @@
 import {Simplex} from "dfoptim";
 
-import * as base from "./base";
+import { base } from "./base";
 import type { OdinModelConstructable, Solution } from "./model";
 import {interpolatedSolution, partialInterpolatedSolution, runModel} from "./model";
 import type {UserType} from "./user";

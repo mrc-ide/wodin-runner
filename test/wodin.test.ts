@@ -1,4 +1,4 @@
-import {wodinRun} from "../src/wodin";
+import {wodinFit, wodinRun} from "../src/wodin";
 import {grid} from "../src/model";
 import * as models from "./models";
 import {approxEqualArray} from "./helpers";
@@ -123,4 +123,15 @@ describe("can set user", () => {
         expect(y[0].x).toEqual(expectedX);
         expect(approxEqualArray(y[0].y, expectedY)).toBe(true);
     })
+});
+
+describe("can fit a model", () => {
+    it("fits", () => {
+        const time = [0, 1, 2, 3, 4, 5, 6];
+        const data = {time, value: time.map((t: number) => 1 + t * 4)}
+        const pars = {base: new Map<string, number>([["a", 0.5]]), vary: ["a"]};
+        const opt = wodinFit(models.User, data, pars, "x", {}, {});
+        const res = opt.run(100);
+        expect(res.converged).toBe(true);
+    });
 });
