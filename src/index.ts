@@ -4,6 +4,7 @@ export {BaseType, base} from "./base";
 export {
     OdinModelConstructable,
     OdinModel,
+    OdinModelBase,
     OdinModelODE,
     OdinModelDDE,
     Solution,

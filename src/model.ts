@@ -25,12 +25,8 @@ export type Solution = (t: number) => number[];
 export type OdinModelConstructable =
     new(base: BaseType, pars: UserType, unusedUserAction: string) => OdinModel;
 
-/**
- * The interface that odin ordinary differential equation (ODE) models
- * will match, though they will be generated in plain JavaScript and
- * not TypeScript.
- */
-export interface OdinModelODE {
+/** Common interface for all odin models */
+export interface OdinModelBase {
     /**  Set parameters into an existing model.
      *
      * @param pars New parameters for the model. Values are are
@@ -47,6 +43,27 @@ export interface OdinModelODE {
      */
     initial(t: number): number[];
 
+    /** Return a vector of names of variables */
+    names(): string[];
+
+    /**
+     * Return the state of the internal storage - odin uses this for
+     * debugging and testing.
+     */
+    getInternal(): InternalStorage;
+
+    /**
+     * Return metadata about the model - odin uses this internally.
+     */
+    getMetadata(): any;
+}
+
+/**
+ * The interface that odin ordinary differential equation (ODE) models
+ * will match, though they will be generated in plain JavaScript and
+ * not TypeScript.
+ */
+export interface OdinModelODE extends OdinModelBase {
     /** Compute the derivatives
      *
      * @param t The time to compute initial conditions at
@@ -68,20 +85,6 @@ export interface OdinModelODE {
      * @param y The value of the variables
      */
     output?(t: number, y: number[]): number[];
-
-    /** Return a vector of names of variables */
-    names(): string[];
-
-    /**
-     * Return the state of the internal storage - odin uses this for
-     * debugging and testing.
-     */
-    getInternal(): InternalStorage;
-
-    /**
-     * Return metadata about the model - odin uses this internally.
-     */
-    getMetadata(): any;
 }
 
 /**
@@ -89,23 +92,7 @@ export interface OdinModelODE {
  * will match, though they will be generated in plain JavaScript and
  * not TypeScript.
  */
-export interface OdinModelDDE {
-    /**  Set parameters into an existing model.
-     *
-     * @param pars New parameters for the model. Values are are
-     * omitted here but present in the model will be unchanged.
-     *
-     * @param unusedUserAction String, describing the action to take
-     * if there are unknown values in `pars` - possible values are
-     * "error", "ignore", "warning" and "message"
-     */
-    setUser(pars: UserType, unusedUserAction: string): void;
-
-    /** Get initial conditions from the model
-     * @param t The time to compute initial conditions at
-     */
-    initial(t: number): number[];
-
+export interface OdinModelDDE extends OdinModelBase {
     /** Compute the derivatives
      *
      * @param t The time to compute initial conditions at
@@ -133,20 +120,6 @@ export interface OdinModelDDE {
      * compute delayed versions of variables
      */
     output?(t: number, y: number[], solution: Solution): number[];
-
-    /** Return a vector of names of variables */
-    names(): string[];
-
-    /**
-     * Return the state of the internal storage - odin uses this for
-     * debugging and testing.
-     */
-    getInternal(): InternalStorage;
-
-    /**
-     * Return metadata about the model - odin uses this internally.
-     */
-    getMetadata(): any;
 }
 
 export function isDDEModel(model: OdinModel): model is OdinModelDDE {
