@@ -1,7 +1,9 @@
-import {grid, wodinRun} from "../src/wodin";
+import {wodinRun} from "../src/wodin";
+import {grid} from "../src/model";
 import * as models from "./models";
 import {approxEqualArray} from "./helpers";
 
+// TODO: move this
 describe("grid", () => {
     it("Can produce an array of numbers", () => {
         expect(grid(0, 10, 6)).toEqual([0, 2, 4, 6, 8, 10]);

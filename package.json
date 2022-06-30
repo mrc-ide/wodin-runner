@@ -36,6 +36,7 @@
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {
+        "dfoptim": "^0.0.4",
         "dopri": "^0.0.12"
     }
 }
