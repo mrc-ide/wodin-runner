@@ -1,8 +1,10 @@
+import { Simplex, SimplexControlParam } from "dfoptim";
 import type { DopriControlParam } from "dopri";
 
 import { base } from "./base";
+import { FitData, FitPars, fitTarget } from "./fit";
 import type { OdinModelConstructable, Solution } from "./model";
-import {runModel} from "./model";
+import { interpolatedSolution, runModel } from "./model";
 import type { UserType } from "./user";
 
 /** The "run" method for wodin; this runs the model and returns a
@@ -26,41 +28,52 @@ export function wodinRun(Model: OdinModelConstructable, pars: UserType,
     const y0 = null;
     const solution = runModel(model, y0, tStart, tEnd, control).solution;
     const names = model.names();
-    /**
-     * @param t0 Start time to return the solution (cannot be less
-     * than `tStart` - we will increase it to `tStart` in that case)
-     *
-     * @param t1 End time to return the solution (cannot be more than
-     * `tEnd` - we will reduce it to `tEnd` in that case)
-     *
-     * @param nPoints Number of points to return - must be at least
-     * two, and points will be evenly spaced between `t0` and `t1`
-     *
-     * @return Returns an array where each element represents a
-     * series. Each element is an object with fields `name` (the name
-     * of the series), `x` (the time values - these will be the same
-     * for every series) and `y` (the series value at each time, the
-     * same length as `x`).
-     */
-    return (t0: number, t1: number, nPoints: number) => {
-        const t = grid(Math.max(t0, tStart), Math.min(t1, tEnd), nPoints);
-        const y = solution(t);
-        // Unfortunately adding typedoc annotations here does not
-        // propagate them up above.
-        return y[0].map((_: any, i: number) => ({
-            name: names[i],
-            x: t,
-            y: y.map((row: number[]) => row[i]),
-        }));
-    };
+    return interpolatedSolution(solution, names, tStart, tEnd);
 }
 
-export function grid(a: number, b: number, len: number) {
-    const dx = (b - a) / (len - 1);
-    const x = [];
-    for (let i = 0; i < len - 1; ++i) {
-        x.push(a + i * dx);
-    }
-    x.push(b);
-    return x;
+/** Begin a fit. This will evaluate the model `pars.vary.length + 1`
+ * times, and then return a
+ * [`dfoptim.Simplex`](https://reside-ic.github.io/dfoptim/classes/Simplex.html)
+ * object. You can then call `.run()` to fit the model in one go
+ * (could block for a long time) or repeatedly call `.step()` until it
+ * returns `true` when it has converged.
+ *
+ * The `data` field of the returned value, both during a run via
+ * `.result()` and on convergence (perhaps via `.run()`) will have
+ * interpolated solutions available via an object containing:
+ *
+ * * `names`: the names of all traces returned by the model
+ * * `pars`: The full model parameters, as a Map (i.e., suitable to
+ *   pass back into an {@link OdinModelConstructable} object or {@link
+ *   wodinRun})
+ * * `solutionAll`: The solution of all series; an interpolating
+ *   function as as would be returned by {@link wodinRun}
+ * * `solutionFit`: The solution to a just the modelled series being
+ *    fit, as a single trace
+ *
+ * @param Model The model constructor
+ *
+ * @param data The data to fit to; there will be one time and one data
+ * series within this
+ *
+ * @param pars Information about the parameters; which are to be
+ * varied, which to be fixed, and their starting values
+ *
+ * @param modelledSeries Name of the series of data produced by the
+ * model that should be compared with the data.
+ *
+ * @param controlODE Control parameters to tune the integration
+ *
+ * @param controlFit Control parameters to tune the optimisation
+ *
+ */
+export function wodinFit(Model: OdinModelConstructable, data: FitData,
+                         pars: FitPars, modelledSeries: string,
+                         controlODE: Partial<DopriControlParam>,
+                         controlFit: Partial<SimplexControlParam>) {
+    const target = fitTarget(Model, data, pars, modelledSeries, controlODE);
+    // TODO: require that we have starting points here (i.e., that
+    // everything variable is in fact a number)
+    const start = pars.vary.map((nm: string) => pars.base.get(nm) as number);
+    return new Simplex(target, start, controlFit);
 }

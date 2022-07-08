@@ -11,6 +11,13 @@ import {InternalStorage, UserType} from "./user";
  */
 export type Solution = (t: number) => number[];
 
+/** Interpolated solution to the system of differential equations over
+ * a set of times (vs a single time in {@link Solution})
+ *
+ *  @param t The time to look up the solution at
+ */
+export type FullSolution = (t: number[]) => number[][];
+
 /**
  * Constructor for an {@link OdinModel}
  *
@@ -202,4 +209,102 @@ function runModelDDE(model: OdinModelDDE, y0: number[] | null,
     solver.initialise(tStart, y0);
     return {solution: solver.run(tEnd),
             statistics: solver.statistics()};
+}
+
+/**
+ * Conversion function for Dopri output into plotly input, allowing
+ * efficient re-interpolation of subsets of the graph.
+ *
+ * @param solution The solution as returned from the solver
+ *
+ * @param names Vector of names for the traces
+ *
+ * @param tStart Starting time for the integration
+ *
+ * @param tEnd End time for the integration
+ */
+export function interpolatedSolution(solution: FullSolution, names: string[],
+                                     tStart: number, tEnd: number) {
+    /**
+     * @param t0 Start time to return the solution (cannot be less
+     * than `tStart` - we will increase it to `tStart` in that case)
+     *
+     * @param t1 End time to return the solution (cannot be more than
+     * `tEnd` - we will reduce it to `tEnd` in that case)
+     *
+     * @param nPoints Number of points to return - must be at least
+     * two, and points will be evenly spaced between `t0` and `t1`
+     *
+     * @return Returns an array where each element represents a
+     * series. Each element is an object with fields `name` (the name
+     * of the series), `x` (the time values - these will be the same
+     * for every series) and `y` (the series value at each time, the
+     * same length as `x`).
+     */
+    return (t0: number, t1: number, nPoints: number) => {
+        const t = grid(Math.max(tStart, t0), Math.min(tEnd, t1), nPoints);
+        const y = solution(t);
+        // Unfortunately adding typedoc annotations here does not
+        // propagate them up above.
+        // TODO: may not be true now?
+        return y[0].map((_: any, i: number) => ({
+            name: names[i],
+            x: t,
+            y: y.map((row: number[]) => row[i]),
+        }));
+    };
+}
+
+/**
+ * Conversion function for Dopri output into plotly input for a single
+ * series, allowing efficient re-interpolation of subsets of the
+ * graph. This is a single-trace version of {@link
+ * fullInterpolatedSolution} intended for use with {@link wodinFit}
+ * (via {@link fitTarget}).
+ *
+ * @param solution The solution as returned from the solver
+ *
+ * @param name Name for the returned trace
+ *
+ * @param index The numeric index of the required trace within the
+ * solution
+ *
+ * @param tStart Starting time for the integration
+ *
+ * @param tEnd End time for the integration
+ */
+export function partialInterpolatedSolution(solution: FullSolution,
+                                            name: string, index: number,
+                                            tStart: number, tEnd: number) {
+    /**
+     * @param t0 Start time to return the solution (cannot be less
+     * than `tStart` - we will increase it to `tStart` in that case)
+     *
+     * @param t1 End time to return the solution (cannot be more than
+     * `tEnd` - we will reduce it to `tEnd` in that case)
+     *
+     * @param nPoints Number of points to return - must be at least
+     * two, and points will be evenly spaced between `t0` and `t1`
+     *
+     * @return Returns an object with fields `name` (the name of the
+     * series), `x` (the time values) and `y` (the series value at
+     * each time, the same length as `x`).
+     */
+    return (t0: number, t1: number, nPoints: number) => {
+        const t = grid(Math.max(tStart, t0), Math.min(tEnd, t1), nPoints);
+        // TODO: we should support this in dopri directly
+        const y = solution(t).map((yt) => yt[index]);
+        // Unfortunately typedoc comments not picked up properly here
+        return {name, x: t, y};
+    };
+}
+
+export function grid(a: number, b: number, len: number) {
+    const dx = (b - a) / (len - 1);
+    const x = [];
+    for (let i = 0; i < len - 1; ++i) {
+        x.push(a + i * dx);
+    }
+    x.push(b);
+    return x;
 }
