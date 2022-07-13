@@ -1,6 +1,6 @@
 {
     "name": "@reside-ic/odin",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "odin js/ts support",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
@@ -8,6 +8,7 @@
         "/lib"
     ],
     "scripts": {
+        "prebuild": "node scripts/versions.js",
         "build": "tsc",
         "webpack": "webpack",
         "docs": "typedoc",
