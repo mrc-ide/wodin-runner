@@ -10,6 +10,7 @@
     "scripts": {
         "prebuild": "node scripts/versions.js",
         "build": "tsc",
+        "prewebpack": "node scripts/versions.js",
         "webpack": "webpack",
         "docs": "typedoc",
         "test": "jest -c jest.config.js",

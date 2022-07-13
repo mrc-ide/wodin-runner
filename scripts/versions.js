@@ -7,9 +7,9 @@ const dest = path.join(root, "src", "versions.ts")
 
 var code = ["export function versions() {",
               "    return {",
-              `        "dfoptim": "${lock.packages["node_modules/dfoptim"].version}",`,
-              `        "dopri": "${lock.packages["node_modules/dopri"].version}",`,
-              `        "odin": "${lock.version}",`,
+              `        dfoptim: "${lock.packages["node_modules/dfoptim"].version}",`,
+              `        dopri: "${lock.packages["node_modules/dopri"].version}",`,
+              `        odin: "${lock.version}",`,
               "    };",
               "}"];
 
