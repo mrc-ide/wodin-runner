@@ -11,7 +11,7 @@ var code = [
     "    return {",
     `        dfoptim: "${lock.packages["node_modules/dfoptim"].version}",`,
     `        dopri: "${lock.packages["node_modules/dopri"].version}",`,
-    `        odin: "${lock.version}",`,
+    `        odinjs: "${lock.version}",`,
     "    };",
     "}"];
 

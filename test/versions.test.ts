@@ -4,5 +4,5 @@ test("Can report versions", () => {
     const res = versions();
     expect(res.dfoptim).toBeDefined();
     expect(res.dopri).toBeDefined();
-    expect(res.odin).toBeDefined();
+    expect(res.odinjs).toBeDefined();
 });

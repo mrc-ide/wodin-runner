@@ -1,5 +1,5 @@
 {
-    "name": "@reside-ic/odin",
+    "name": "@reside-ic/odinjs",
     "version": "0.0.4",
     "description": "odin js/ts support",
     "main": "lib/index.js",
