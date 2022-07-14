@@ -1,7 +1,8 @@
 import { base } from "./base";
 import type { OdinModelConstructable, Solution } from "./model";
-import {interpolatedSolution, partialInterpolatedSolution, runModel} from "./model";
-import type {UserType} from "./user";
+import { interpolatedSolution, partialInterpolatedSolution, runModel } from "./model";
+import { UnusedUserAction } from "./user";
+import type { UserType } from "./user";
 
 /** Interface for data to fit an odin model to; every data set has two
  *  series, even if they are derived from some larger data set.
@@ -37,7 +38,7 @@ export function fitTarget(Model: OdinModelConstructable,
     const tEnd = data.time[data.time.length - 1];
     return (theta: number[]) => {
         const p = updatePars(pars, theta);
-        const model = new Model(base, p, "error");
+        const model = new Model(base, p, UnusedUserAction.Error);
         const y0 = null;
         const solution = runModel(model, y0, tStart, tEnd, control).solution;
         const names = model.names();

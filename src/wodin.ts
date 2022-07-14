@@ -5,6 +5,7 @@ import { base } from "./base";
 import { FitData, FitPars, fitTarget } from "./fit";
 import type { OdinModelConstructable, Solution } from "./model";
 import { interpolatedSolution, runModel } from "./model";
+import { UnusedUserAction } from "./user";
 import type { UserType } from "./user";
 
 /** The "run" method for wodin; this runs the model and returns a
@@ -24,7 +25,7 @@ import type { UserType } from "./user";
 export function wodinRun(Model: OdinModelConstructable, pars: UserType,
                          tStart: number, tEnd: number,
                          control: Partial<DopriControlParam>) {
-    const model = new Model(base, pars, "error");
+    const model = new Model(base, pars, UnusedUserAction.Error);
     const y0 = null;
     const solution = runModel(model, y0, tStart, tEnd, control).solution;
     const names = model.names();

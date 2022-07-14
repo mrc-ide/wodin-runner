@@ -44,6 +44,15 @@ export type UserType = Map<string, UserValue>;
  */
 export type InternalStorage = Record<string, number | number[]>;
 
+// There is an (undocumented) inconsistency in the R version here,
+// which I'll tidy up later. This way is nicer for the JS though.
+export enum UnusedUserAction {
+    Error = "error",
+    Ignore = "ignore",
+    Warning = "warning",
+    Message = "message",
+}
+
 /**
  * Validate that a provided set of parameters `pars` contains only the
  * values in `allowed`, handling this as requested by
@@ -58,8 +67,8 @@ export type InternalStorage = Record<string, number | number[]>;
  * "error", "ignore", "warning" and "message"
  */
 export function checkUser(pars: UserType, allowed: string[],
-                          unusedUserAction: string) {
-    if (unusedUserAction === "ignore") {
+                          unusedUserAction: UnusedUserAction) {
+    if (unusedUserAction === UnusedUserAction.Ignore) {
         return;
     }
     const err = [];
@@ -70,11 +79,11 @@ export function checkUser(pars: UserType, allowed: string[],
     }
     if (err.length > 0) {
         const msg = "Unknown user parameters: " + err.join(", ");
-        if (unusedUserAction === "message") {
+        if (unusedUserAction === UnusedUserAction.Message) {
             console.log(msg);
-        } else if (unusedUserAction === "warning") {
+        } else if (unusedUserAction === UnusedUserAction.Warning) {
             console.warn(msg);
-        } else if (unusedUserAction === "stop") {
+        } else if (unusedUserAction === UnusedUserAction.Error) {
             throw Error(msg);
         } else {
             throw Error(msg + " (and invalid value for unusedUserAction)");

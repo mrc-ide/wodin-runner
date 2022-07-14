@@ -3,7 +3,7 @@ import type { DopriControlParam } from "dopri";
 
 import {base, BaseType} from "./base";
 
-import {InternalStorage, UserType} from "./user";
+import {InternalStorage, UnusedUserAction, UserType} from "./user";
 
 /** Interpolated solution to the system of differential equations
  *
@@ -25,12 +25,12 @@ export type FullSolution = (t: number[]) => number[][];
  *
  * @param pars Parameters to pass to the model
  *
- * @param unusedUserAction String, describing the action to take if
- * there are unknown values in `pars` - possible values are "error",
- * "ignore", "warning" and "message"
+ * @param unusedUserAction The action to take if there are unknown
+ * values in `pars`
  */
 export type OdinModelConstructable =
-    new(base: BaseType, pars: UserType, unusedUserAction: string) => OdinModel;
+    new(base: BaseType, pars: UserType,
+        unusedUserAction: UnusedUserAction) => OdinModel;
 
 /** Common interface for all odin models */
 export interface OdinModelBase {
@@ -39,11 +39,10 @@ export interface OdinModelBase {
      * @param pars New parameters for the model. Values are are
      * omitted here but present in the model will be unchanged.
      *
-     * @param unusedUserAction String, describing the action to take
-     * if there are unknown values in `pars` - possible values are
-     * "error", "ignore", "warning" and "message"
+     * @param unusedUserAction The action to take if there are unknown
+     * values in `pars`
      */
-    setUser(pars: UserType, unusedUserAction: string): void;
+    setUser(pars: UserType, unusedUserAction: UnusedUserAction): void;
 
     /** Get initial conditions from the model
      * @param t The time to compute initial conditions at

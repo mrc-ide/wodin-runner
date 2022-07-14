@@ -1,41 +1,41 @@
-import {InternalStorage, UserTensor, UserValue, checkUser, setUserScalar, setUserArrayFixed, setUserArrayVariable} from "../src/user";
+import {InternalStorage, UnusedUserAction, UserTensor, UserValue, checkUser, setUserScalar, setUserArrayFixed, setUserArrayVariable} from "../src/user";
 
 describe("checkUser", () => {
     const pars = new Map<string, UserValue>([["a", 1], ["b", 2], ["c", 3]]);
     it("does no checking if ignored", () => {
-        checkUser(pars, [], "ignore");
+        checkUser(pars, [], UnusedUserAction.Ignore);
     });
 
     it("messages if unknown keys found", () => {
         console.log = jest.fn();
-        checkUser(pars, ["a", "b"], "message");
+        checkUser(pars, ["a", "b"], UnusedUserAction.Message);
         expect(console.log)
             .toHaveBeenCalledWith("Unknown user parameters: c");
-        checkUser(pars, ["b"], "message");
+        checkUser(pars, ["b"], UnusedUserAction.Message);
         expect(console.log)
             .toHaveBeenCalledWith("Unknown user parameters: a, c");
     })
 
     it("warns if unknown keys found", () => {
         console.warn = jest.fn();
-        checkUser(pars, ["a", "b"], "warning");
+        checkUser(pars, ["a", "b"], UnusedUserAction.Warning);
         expect(console.warn)
             .toHaveBeenCalledWith("Unknown user parameters: c");
     })
 
     it("error if unknown keys found", () => {
-        expect(() => checkUser(pars, ["a", "b"], "stop"))
+        expect(() => checkUser(pars, ["a", "b"], UnusedUserAction.Error))
             .toThrow("Unknown user parameters: c");
-        expect(() => checkUser(pars, ["b"], "stop"))
+        expect(() => checkUser(pars, ["b"], UnusedUserAction.Error))
             .toThrow("Unknown user parameters: a, c");
-        expect(() => checkUser(pars, ["a", "b", "c"], "stop"))
+        expect(() => checkUser(pars, ["a", "b", "c"], UnusedUserAction.Error))
             .not.toThrow();
     })
 
     it("errors if invalid option given", () => {
-        expect(() => checkUser(pars, ["a", "b"], "throw"))
+        expect(() => checkUser(pars, ["a", "b"], "throw" as UnusedUserAction))
             .toThrow("Unknown user parameters: c (and invalid value for unusedUserAction)");
-        expect(() => checkUser(pars, ["a", "b", "c"], "throw"))
+        expect(() => checkUser(pars, ["a", "b", "c"], "throw" as UnusedUserAction))
             .not.toThrow();
     })
 });

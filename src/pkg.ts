@@ -3,7 +3,7 @@ import type { DopriControlParam } from "dopri";
 import { base } from "./base";
 import type { OdinModel, OdinModelConstructable, Solution } from "./model";
 import {isODEModel, runModel} from "./model";
-import type { UserType } from "./user";
+import type { UnusedUserAction, UserType } from "./user";
 
 /**
  * Wrapper class around an {@link OdinModel} designed to be driven
@@ -17,12 +17,12 @@ export class PkgWrapper {
      *
      * @param pars Parameters to set into the model on construction
      *
-     * @param unusedUserAction String, describing the action to take
-     * if there are unknown values in `pars` - possible values are
-     * "error", "ignore", "warning" and "message"
+     * @param unusedUserAction The action to take if there are unknown
+     * values in `pars`
      */
-    constructor(Model: OdinModelConstructable, pars: UserType, unusedUserAction: string) {
-        this.model = new Model(base, pars, unusedUserAction);
+    constructor(Model: OdinModelConstructable, pars: UserType,
+                unusedUserAction: string) {
+        this.model = new Model(base, pars, unusedUserAction as UnusedUserAction);
     }
 
     /**
@@ -87,7 +87,7 @@ export class PkgWrapper {
      * found in `pars`, see {@link PkgWrapper.constructor}
      */
     public setUser(pars: UserType, unusedUserAction: string) {
-        this.model.setUser(pars, unusedUserAction);
+        this.model.setUser(pars, unusedUserAction as UnusedUserAction);
     }
 
     /**
