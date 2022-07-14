@@ -10,5 +10,11 @@ export {
     OdinModelDDE,
     Solution,
 } from "./model";
+export {
+    BatchPars,
+    batchParsDisplace,
+    batchParsRange,
+    batchRun,
+} from "./batch";
 export {InternalStorage, UserTensor, UserType, UserValue} from "./user";
 export {versions} from "./versions";
