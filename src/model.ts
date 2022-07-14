@@ -1,9 +1,9 @@
 import * as dopri from "dopri";
 import type { DopriControlParam } from "dopri";
 
-import {base, BaseType} from "./base";
-
-import {InternalStorage, UserType} from "./user";
+import { base, BaseType } from "./base";
+import { InternalStorage, UserType } from "./user";
+import { grid } from "./util";
 
 /** Interpolated solution to the system of differential equations
  *
@@ -297,14 +297,4 @@ export function partialInterpolatedSolution(solution: FullSolution,
         // Unfortunately typedoc comments not picked up properly here
         return {name, x: t, y};
     };
-}
-
-export function grid(a: number, b: number, len: number) {
-    const dx = (b - a) / (len - 1);
-    const x = [];
-    for (let i = 0; i < len - 1; ++i) {
-        x.push(a + i * dx);
-    }
-    x.push(b);
-    return x;
 }
