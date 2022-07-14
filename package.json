@@ -1,14 +1,17 @@
 {
-    "name": "@reside-ic/odin",
-    "version": "0.0.3",
+    "name": "@reside-ic/odinjs",
+    "version": "0.0.4",
     "description": "odin js/ts support",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
     "files": [
-        "/lib"
+        "/lib",
+        "/dist"
     ],
     "scripts": {
+        "prebuild": "node scripts/versions.js",
         "build": "tsc",
+        "prewebpack": "node scripts/versions.js",
         "webpack": "webpack",
         "docs": "typedoc",
         "test": "jest -c jest.config.js",

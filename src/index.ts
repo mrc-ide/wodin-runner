@@ -11,3 +11,4 @@ export {
     Solution,
 } from "./model";
 export {InternalStorage, UserTensor, UserType, UserValue} from "./user";
+export {versions} from "./versions";
