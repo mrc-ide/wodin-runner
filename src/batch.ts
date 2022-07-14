@@ -65,8 +65,14 @@ export function batchParsRange(base: UserType, name: string, count: number,
                                logarithmic: boolean,
                                min: number, max: number): BatchPars {
     const value = getParameterValueAsNumber(base, name);
-    if (value < min || value > max) {
-        throw Error(`Expected ${value} to lie in [${min}, ${max}]`);
+    if (min > value) {
+        throw Error(`Expected lower bound to be no greater than ${value}`);
+    }
+    if (max < value) {
+        throw Error(`Expected upper bound to be no less than ${value}`);
+    }
+    if (min >= max) {
+        throw Error("Expected upper bound to be greater than lower bound");
     }
     if (count < 2) {
         throw Error("Must include at least 2 traces in the batch");
@@ -94,8 +100,9 @@ export function batchParsDisplace(base: UserType, name: string, count: number,
                                   logarithmic: boolean,
                                   displace: number): BatchPars {
     const value = getParameterValueAsNumber(base, name);
-    const min = value * (1 - displace / 100);
-    const max = value * (1 + displace / 100);
+    const delta = displace / 100;
+    const min = value * (1 - delta);
+    const max = value * (1 + delta);
     return batchParsRange(base, name, count, logarithmic, min, max);
 }
 
