@@ -37,7 +37,7 @@ describe("Can generate sensible sets of parameters", () => {
             .toThrow("Expected upper bound to be no less than 1");
         expect(() => batchParsRange(user, "a", 5, false, 1, 1))
             .toThrow("Expected upper bound to be greater than lower bound");
-    })
+    });
 
     it("Requires that we have at least two points in the range", () => {
         const user = new Map<string, number>([["a", 1], ["b", 2]]);
