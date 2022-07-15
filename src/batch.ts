@@ -43,7 +43,7 @@ export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
     });
 }
 
-/** Generate a set of parameters suitable to pass through to {@param
+/** Generate a set of parameters suitable to pass through to {@link
  * batchRun}, evenly spaced between `min` and `max`.
  *
  * @param base The base set of parameters
