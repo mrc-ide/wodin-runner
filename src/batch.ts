@@ -39,7 +39,7 @@ export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          control: Partial<DopriControlParam>) {
     return pars.values.map((v: number) => {
         const p = updatePars(pars.base, pars.name, v);
-        wodinRun(Model, p, tStart, tEnd, control);
+        return wodinRun(Model, p, tStart, tEnd, control);
     });
 }
 
@@ -106,7 +106,7 @@ export function batchParsDisplace(base: UserType, name: string, count: number,
     return batchParsRange(base, name, count, logarithmic, min, max);
 }
 
-function updatePars(base: UserType, name: string, value: number) {
+export function updatePars(base: UserType, name: string, value: number) {
     const ret = new Map(base);
     ret.set(name, value);
     return ret;
