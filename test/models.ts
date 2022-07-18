@@ -273,7 +273,7 @@ export class InterpolateSpline {
 
     rhs(t, state, dstatedt) {
         var internal = this.internal;
-        var pulse = t.eval(internal.interpolate_pulse, 0);
+        var pulse = internal.interpolate_pulse.eval(t, 0);
         dstatedt[0] = pulse;
     }
 
@@ -291,6 +291,7 @@ export class InterpolateSpline {
         this.metadata.internalOrder = {dim_tp: null, dim_zp: null, initial_y: null, tp: internal.dim_tp, zp: internal.dim_zp};
         this.metadata.variableOrder = {y: null};
         this.metadata.outputOrder = null;
+        this.metadata.interpolateTimes = this.base.interpolate.times([internal.tp[0]], [internal.tp[internal.dim_tp - 1]]);
     }
 
     setUser(user, unusedUserAction) {
@@ -302,9 +303,8 @@ export class InterpolateSpline {
         var dim_zp = new Array(2);
         this.base.user.setUserArrayVariable(user, "zp", internal, dim_zp, -Infinity, Infinity, false);
         internal.dim_zp = dim_zp[0];
-        base.interpolate.CheckY([internal.dim_tp], [internal.dim_zp], "zp", "pulse");
-        internal.interpolate_pulse = base.interpolate.alloc("spline", internal.tp, internal.zp)
-        this.metadata.interpolateTimes = this.base.interpolateTimes([internal.tp[0]], [internal.tp[internal.dim_tp - 1]]);
+        this.base.interpolate.checkY([internal.dim_tp], [internal.dim_zp], "zp", "pulse");
+        internal.interpolate_pulse = this.base.interpolate.alloc("spline", internal.tp, internal.zp)
         this.updateMetadata();
     }
 
