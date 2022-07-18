@@ -260,3 +260,63 @@ export class DelayNoOutput {
         return this.internal;
     }
 }
+
+// @ts-nocheck
+export class InterpolateSpline {
+    constructor(base, user, unusedUserAction) {
+        this.base = base;
+        this.internal = {};
+        var internal = this.internal;
+        internal.initial_y = 0;
+        this.setUser(user, unusedUserAction);
+    }
+
+    rhs(t, state, dstatedt) {
+        var internal = this.internal;
+        var pulse = t.eval(internal.interpolate_pulse, 0);
+        dstatedt[0] = pulse;
+    }
+
+    initial(t) {
+        var internal = this.internal;
+        var state = Array(1).fill(0);
+        state[0] = internal.initial_y;
+        return state;
+    }
+
+    updateMetadata() {
+        this.metadata = {};
+        var internal = this.internal;
+        this.metadata.ynames = ["t", "y"]
+        this.metadata.internalOrder = {dim_tp: null, dim_zp: null, initial_y: null, tp: internal.dim_tp, zp: internal.dim_zp};
+        this.metadata.variableOrder = {y: null};
+        this.metadata.outputOrder = null;
+    }
+
+    setUser(user, unusedUserAction) {
+        this.base.user.checkUser(user, ["tp", "zp"], unusedUserAction);
+        var internal = this.internal;
+        var dim_tp = new Array(2);
+        this.base.user.setUserArrayVariable(user, "tp", internal, dim_tp, -Infinity, Infinity, false);
+        internal.dim_tp = dim_tp[0];
+        var dim_zp = new Array(2);
+        this.base.user.setUserArrayVariable(user, "zp", internal, dim_zp, -Infinity, Infinity, false);
+        internal.dim_zp = dim_zp[0];
+        base.interpolate.CheckY([internal.dim_tp], [internal.dim_zp], "zp", "pulse");
+        internal.interpolate_pulse = base.interpolate.alloc("spline", internal.tp, internal.zp)
+        this.metadata.interpolateTimes = this.base.interpolateTimes([internal.tp[0]], [internal.tp[internal.dim_tp - 1]]);
+        this.updateMetadata();
+    }
+
+    names() {
+        return this.metadata.ynames.slice(1);
+    }
+
+    getInternal() {
+        return this.internal;
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+}

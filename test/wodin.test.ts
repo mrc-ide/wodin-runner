@@ -86,6 +86,20 @@ describe("can run basic models", () => {
         expect(y[1].x).toEqual(expectedT);
         expect(approxEqualArray(y[1].y, expectedY, 1e-3)).toBe(true);
     });
+
+    it("runs a model with interpolation", () => {
+        const pi = Math.PI;
+        const tp = grid(0, pi, 31);
+        const zp = tp.map((t: number) => Math.sin(t));
+        const user = new Map<string, number | number[]>([["tp", tp], ["zp", zp]]);
+        const control : any = {};
+        const solution = wodinRun(models.InterpolateSpline, user, 0, pi, control);
+
+        const expectedT = grid(0, 10, 11);
+        const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
+        const y = solution(0, pi, 101);
+        expect(approxEqualArray(y[0].y, expectedY, 1e-4)).toBe(true);
+    });
 });
 
 describe("can set user", () => {
