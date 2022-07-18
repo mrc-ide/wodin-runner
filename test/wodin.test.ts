@@ -93,11 +93,11 @@ describe("can run basic models", () => {
         const zp = tp.map((t: number) => Math.sin(t));
         const user = new Map<string, number | number[]>([["tp", tp], ["zp", zp]]);
         const control : any = {};
-        const solution = wodinRun(models.InterpolateSpline, user, 0, 3, control);
+        const solution = wodinRun(models.InterpolateSpline, user, 0, pi, control);
 
-        const expectedT = grid(0, 3, 11);
+        const expectedT = grid(0, pi, 11);
         const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
-        const y = solution(0, 3, 11);
+        const y = solution(0, pi, 11);
         expect(approxEqualArray(y[0].y, expectedY, 1e-4)).toBe(true);
     });
 });
