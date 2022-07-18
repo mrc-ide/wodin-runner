@@ -1,6 +1,6 @@
 {
     "name": "@reside-ic/odinjs",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "odin js/ts support",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
