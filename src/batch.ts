@@ -1,6 +1,6 @@
 import type { DopriControlParam } from "dopri";
 
-import type { OdinModelConstructable } from "./model";
+import type { InterpolatedSolution, OdinModelConstructable, Series } from "./model";
 import { UserType } from "./user";
 import { grid, gridLog } from "./util";
 import { wodinRun } from "./wodin";
@@ -121,4 +121,24 @@ function getParameterValueAsNumber(pars: UserType, name: string): number {
         throw Error(`Expected a number for '${name}'`);
     }
     return value;
+}
+
+export class BatchResult {
+    public readonly pars: BatchPars;
+    public readonly solution: InterpolatedSolution[];
+
+    constructor(pars: BatchPars, solution: InterpolatedSolution[]) {
+        this.pars = pars;
+        this.solution = solution;
+    }
+
+    public valueAtTime(time: number): Series[] {
+        const y = this.solution.map(
+            (s: InterpolatedSolution) => s(time, time, 1));
+        return y[0].map((_: any, idxSeries: number) => ({
+            name: y[0][idxSeries].name,
+            x: this.pars.values,
+            y: y.map((s: Series[]) => s[idxSeries].y[0]),
+        }));
+    }
 }

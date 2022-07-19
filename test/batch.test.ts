@@ -1,7 +1,8 @@
-import { batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
+import { BatchResult, batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
+import { approxEqualArray } from "./helpers";
 import { User } from "./models";
 
 describe("Can generate sensible sets of parameters", () => {
@@ -83,5 +84,25 @@ describe("run sensitivity", () => {
         expect(res[2](tStart, tEnd, n)).toEqual(central(tStart, tEnd, n));
         expect(res[0](tStart, tEnd, n)).toEqual(lower(tStart, tEnd, n));
         expect(res[4](tStart, tEnd, n)).toEqual(upper(tStart, tEnd, n));
+    });
+});
+
+
+describe("can extract from a batch result", () => {
+    // TODO: we need a model with both parameters and multiple traces
+    // here to confirm this is correct.
+    it("Extracts state at a particular time", () => {
+        const user = new Map<string, number>([["a", 2]]);
+        const pars = batchParsRange(user, "a", 5, false, 0, 4);
+        const control = {};
+        const tStart = 0;
+        const tEnd = 10;
+        const sol = batchRun(User, pars, tStart, tEnd, control);
+        const obj = new BatchResult(pars, sol);
+        const res = obj.valueAtTime(tEnd);
+        expect(res.length).toBe(1); // just one series here
+        expect(res[0].name).toBe("x");
+        expect(res[0].x).toEqual(grid(0, 4, 5));
+        expect(approxEqualArray(res[0].y, [1, 11, 21, 31, 41])).toBe(true);
     });
 });
