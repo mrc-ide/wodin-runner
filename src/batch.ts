@@ -2,7 +2,7 @@ import type { DopriControlParam } from "dopri";
 
 import type { InterpolatedSolution, OdinModelConstructable, Series } from "./model";
 import { UserType } from "./user";
-import { grid, gridLog } from "./util";
+import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
 /**
@@ -126,9 +126,16 @@ function getParameterValueAsNumber(pars: UserType, name: string): number {
 export class BatchResult {
     public readonly pars: BatchPars;
     public readonly solution: InterpolatedSolution[];
+    public readonly tStart: number;
+    public readonly tEnd: number;
 
-    constructor(pars: BatchPars, solution: InterpolatedSolution[]) {
+    private _extremes?: Extremes<Series[]>;
+
+    constructor(pars: BatchPars, tStart: number, tEnd: number,
+                solution: InterpolatedSolution[]) {
         this.pars = pars;
+        this.tStart = tStart;
+        this.tEnd = tEnd;
         this.solution = solution;
     }
 
@@ -141,4 +148,56 @@ export class BatchResult {
             y: y.map((s: Series[]) => s[idxSeries].y[0]),
         }));
     }
+
+    public extreme(property: keyof Extremes<Series[]>): Series[] {
+        return this.findExtremes()[property];
+    }
+
+    public findExtremes(): Extremes<Series[]> {
+        if (this._extremes === undefined) {
+            const n = 51;
+            const y = this.solution.map(
+                (s: InterpolatedSolution) => s(this.tStart, this.tEnd, n));
+            const nms = y[0].map((x: Series) => x.name);
+            const extremes = loop(nms.length, (i: number) =>
+                                  y.map((s: Series[]) => findExtremes(s[i])));
+            this._extremes = {
+                tMin: extractExtremes("tMin", nms, this.pars.values, extremes),
+                tMax: extractExtremes("tMax", nms, this.pars.values, extremes),
+                yMin: extractExtremes("yMin", nms, this.pars.values, extremes),
+                yMax: extractExtremes("yMax", nms, this.pars.values, extremes),
+            }
+        }
+        return this._extremes;
+    }
+}
+
+interface Extremes<T> {
+    tMin: T;
+    tMax: T;
+    yMin: T;
+    yMax: T;
+}
+
+// Later, we might do some polishing of these, which should make it
+// both faster and more accurate, but we'll need to pass in the
+// correct interpolating function too.
+function findExtremes(s: Series): Extremes<number> {
+    const idxMin = whichMin(s.y);
+    const idxMax = whichMax(s.y);
+    const tMin = s.x[idxMin];
+    const tMax = s.x[idxMax];
+    const yMin = s.y[idxMin];
+    const yMax = s.y[idxMax];
+    return {tMax, tMin, yMax, yMin};
+}
+
+function extractExtremes(property: keyof Extremes<number>,
+                         names: string[], values: number[],
+                         extremes: Extremes<number>[][]) {
+    return loop(names.length, (i: number) => ({
+        name: names[i],
+        x: values,
+        y: extremes[i].map((el: Extremes<number>) => el[property]),
+    }));
 }

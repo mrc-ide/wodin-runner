@@ -3,7 +3,7 @@ import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
 import { approxEqualArray } from "./helpers";
-import { User } from "./models";
+import { Output, User } from "./models";
 
 describe("Can generate sensible sets of parameters", () => {
     it("Generates a simple sequence", () => {
@@ -98,11 +98,32 @@ describe("can extract from a batch result", () => {
         const tStart = 0;
         const tEnd = 10;
         const sol = batchRun(User, pars, tStart, tEnd, control);
-        const obj = new BatchResult(pars, sol);
+        const obj = new BatchResult(pars, tStart, tEnd, sol);
         const res = obj.valueAtTime(tEnd);
         expect(res.length).toBe(1); // just one series here
         expect(res[0].name).toBe("x");
         expect(res[0].x).toEqual(grid(0, 4, 5));
         expect(approxEqualArray(res[0].y, [1, 11, 21, 31, 41])).toBe(true);
+    });
+
+    it("Extracts state at a particular time for multivariable models", () => {
+        const user = new Map<string, number>([["a", 2]]);
+        const pars = batchParsRange(user, "a", 5, false, 0, 4);
+        const control = {};
+        const tStart = 0;
+        const tEnd = 10;
+        const sol = batchRun(Output, pars, tStart, tEnd, control);
+        const obj = new BatchResult(pars, tStart, tEnd, sol);
+        const res = obj.valueAtTime(tEnd);
+        expect(res.length).toBe(2);
+        expect(res[0].name).toBe("x");
+        expect(res[1].name).toBe("y");
+        expect(res[0].x).toEqual(grid(0, 4, 5));
+        expect(approxEqualArray(res[0].y, [1, 11, 21, 31, 41])).toBe(true);
+        const e = obj.extreme("yMax");
+        expect(e.length).toBe(2);
+        expect(e[0].name).toBe("x");
+        expect(e[0].x).toEqual(grid(0, 4, 5));
+        expect(approxEqualArray(e[0].y, [1, 11, 21, 31, 41])).toBe(true);
     });
 });
