@@ -90,7 +90,6 @@ describe("run sensitivity", () => {
     });
 });
 
-
 describe("can extract from a batch result", () => {
     // TODO: we need a model with both parameters and multiple traces
     // here to confirm this is correct.

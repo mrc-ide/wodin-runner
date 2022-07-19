@@ -85,11 +85,11 @@ export class Batch {
             const extremes = loop(nms.length, (i: number) =>
                                   y.map((s: Series[]) => findExtremes(s[i])));
             this._extremes = {
-                tMin: extractExtremes("tMin", nms, this.pars.values, extremes),
                 tMax: extractExtremes("tMax", nms, this.pars.values, extremes),
-                yMin: extractExtremes("yMin", nms, this.pars.values, extremes),
+                tMin: extractExtremes("tMin", nms, this.pars.values, extremes),
                 yMax: extractExtremes("yMax", nms, this.pars.values, extremes),
-            }
+                yMin: extractExtremes("yMin", nms, this.pars.values, extremes),
+            };
         }
         return this._extremes;
     }
@@ -239,7 +239,7 @@ function findExtremes(s: Series): Extremes<number> {
 
 function extractExtremes(name: keyof Extremes<number>,
                          names: string[], values: number[],
-                         extremes: Extremes<number>[][]) {
+                         extremes: Array<Array<Extremes<number>>>) {
     return loop(names.length, (i: number) => ({
         name: names[i],
         x: values,
