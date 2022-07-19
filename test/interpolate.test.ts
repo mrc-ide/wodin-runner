@@ -28,6 +28,8 @@ describe("Can validate interpolation times", () => {
     it("Can report back tcrit from interpolation times", () => {
         const t = {min: 0, max: 11};
         expect(interpolateCheckT(0, 10, t)).toBe(11);
+        expect(interpolateCheckT(0, 10, t, 10.5)).toBe(10.5);
+        expect(interpolateCheckT(0, 10, t, 11.5)).toBe(11.5);
     });
 
     it("Requires that integration times do not extrapolate", () => {

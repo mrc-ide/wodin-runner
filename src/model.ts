@@ -199,7 +199,8 @@ export function runModel(model: OdinModel, y0: number[] | null,
                          tStart: number, tEnd: number,
                          control: Partial<DopriControlParam>) {
     const interpolateTimes = model.getMetadata().interpolateTimes;
-    control.tcrit = interpolateCheckT(tStart, tEnd, interpolateTimes);
+    control.tcrit = interpolateCheckT(tStart, tEnd, interpolateTimes,
+                                      control.tcrit);
     return isDDEModel(model) ?
         runModelDDE(model as OdinModelDDE, y0, tStart, tEnd, control) :
         runModelODE(model as OdinModelODE, y0, tStart, tEnd, control);

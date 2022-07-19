@@ -68,9 +68,13 @@ export function interpolateCheckY(dimArg: number[], dimTarget: number[],
  * @param tEnd End time of the integration
  *
  * @param times Information about the interpolation bounds
+ *
+ * @param tcrit The critical time to stop the model - if given we
+ * won't set this based on the interpolation end time.
  */
 export function interpolateCheckT(tStart: number, tEnd: number,
-                                  times?: InterpolateTimes) {
+                                  times?: InterpolateTimes,
+                                  tcrit?: number) {
     if (times === undefined) {
         return Infinity;
     }
@@ -82,10 +86,19 @@ export function interpolateCheckT(tStart: number, tEnd: number,
         throw Error("Integration times do not span interpolation range;" +
                     ` max: ${times.max}`);
     }
-    // This logic needs tweaking once we expose the critical time
-    // interface more broadly (i.e., where any model can add a
-    // critical time; mrc-3418)
-    return times.max;
+
+    // See odin (R/generate_r_support.R:support_check_interpolate_t)
+    // It would be better to add an else clause to this containing
+    //
+    // tcrit = Math.min(tcrit, times.max);
+    //
+    // but this requires updating odin tests and the other
+    // targets. It's probably the correct behaviour though.
+    if (tcrit === undefined) {
+        tcrit = times.max;
+    }
+
+    return tcrit;
 }
 
 export function interpolateTimes(start: number[], end: number[]): InterpolateTimes {
