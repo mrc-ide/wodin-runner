@@ -78,7 +78,12 @@ export class Batch {
 
     private findExtremes(): Extremes<Series[]> {
         if (this._extremes === undefined) {
-            const n = 51;
+            // Later we'll polish these off with a 1d optimiser from
+            // ~50 points which will be likely faster and more
+            // accurate; that depends on a 1d optimiser added to
+            // dfoptim, then some additional work in findExtremes
+            // (which will need to accept the solution object too).
+            const n = 501;
             const y = this.solution.map(
                 (s: InterpolatedSolution) => s(this.tStart, this.tEnd, n));
             const nms = y[0].map((x: Series) => x.name);
