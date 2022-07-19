@@ -26,12 +26,13 @@ interface InterpolateTimes {
  */
 export function interpolateAlloc(method: string,
                                  t: number[], y: number[]): InterpolatorBase {
+    const yy = tensorToArray(y, t.length);
     if (method === "constant") {
-        return new InterpolatorConstant(t, y);
+        return new InterpolatorConstant(t, yy);
     } else if (method === "linear") {
-        return new InterpolatorLinear(t, y);
+        return new InterpolatorLinear(t, yy);
     } else if (method === "spline") {
-        return new InterpolatorSpline(t, y);
+        return new InterpolatorSpline(t, yy);
     } else {
         throw Error(`Invalid interpolation method '${method}'`);
     }
@@ -100,3 +101,15 @@ export const interpolate = {
     checkY: interpolateCheckY,
     times: interpolateTimes,
 };
+
+function tensorToArray(y: number[], len: number) {
+    if (y.length === len) {
+        return [y];
+    }
+    const ret = [];
+    const n = y.length / len;
+    for (let i = 0; i < n; ++i) {
+        ret.push(y.slice(len * i, len * (i + 1)));
+    }
+    return ret;
+}

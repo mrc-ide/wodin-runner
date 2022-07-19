@@ -320,3 +320,78 @@ export class InterpolateSpline {
         return this.metadata;
     }
 }
+
+// @ts-nocheck
+export class InterpolateArray {
+    constructor(base, user, unusedUserAction) {
+        this.base = base;
+        this.internal = {};
+        var internal = this.internal;
+        internal.dim_pulse = 2;
+        internal.dim_y = 2;
+        internal.initial_y = new Array(internal.dim_y);
+        internal.pulse = new Array(internal.dim_pulse);
+        for (var i = 1; i <= internal.dim_y; ++i) {
+            internal.initial_y[i - 1] = 0;
+        }
+        this.setUser(user, unusedUserAction);
+    }
+
+    rhs(t, state, dstatedt) {
+        var internal = this.internal;
+        internal.pulse = internal.interpolate_pulse.evalAll(t);
+        for (var i = 1; i <= internal.dim_y; ++i) {
+            dstatedt[0 + i - 1] = internal.pulse[i - 1];
+        }
+    }
+
+    initial(t) {
+        var internal = this.internal;
+        var state = Array(internal.dim_y).fill(0);
+        for (var i = 0; i < internal.dim_y; ++i) {
+            state[0 + i] = internal.initial_y[i];
+        }
+        return state;
+    }
+
+    updateMetadata() {
+        this.metadata = {};
+        var internal = this.internal;
+        this.metadata.ynames = ["t"];
+        for (var i = 1; i <= internal.dim_y; ++i) {
+            this.metadata.ynames.push("y[" + i + "]");
+        }
+        this.metadata.internalOrder = {dim_pulse: null, dim_tp: null, dim_y: null, dim_zp: null, dim_zp_1: null, dim_zp_2: null, initial_y: internal.dim_y, pulse: internal.dim_pulse, tp: internal.dim_tp, zp: [internal.dim_zp_1, internal.dim_zp_2]};
+        this.metadata.variableOrder = {y: internal.dim_y};
+        this.metadata.outputOrder = null;
+        this.metadata.interpolateTimes = this.base.interpolate.times([internal.tp[0]], []);
+    }
+
+    setUser(user, unusedUserAction) {
+        this.base.user.checkUser(user, ["tp", "zp"], unusedUserAction);
+        var internal = this.internal;
+        var dim_tp = new Array(2);
+        this.base.user.setUserArrayVariable(user, "tp", internal, dim_tp, -Infinity, Infinity, false);
+        internal.dim_tp = dim_tp[0];
+        var dim_zp = new Array(3);
+        this.base.user.setUserArrayVariable(user, "zp", internal, dim_zp, -Infinity, Infinity, false);
+        internal.dim_zp = dim_zp[0];
+        internal.dim_zp_1 = dim_zp[1];
+        internal.dim_zp_2 = dim_zp[2];
+        this.base.interpolate.checkY([internal.dim_tp, internal.dim_pulse], [internal.dim_zp_1, internal.dim_zp_2], "zp", "pulse");
+        internal.interpolate_pulse = this.base.interpolate.alloc("constant", internal.tp, internal.zp)
+        this.updateMetadata();
+    }
+
+    names() {
+        return this.metadata.ynames.slice(1);
+    }
+
+    getInternal() {
+        return this.internal;
+    }
+
+    getMetadata() {
+        return this.metadata;
+    }
+}
