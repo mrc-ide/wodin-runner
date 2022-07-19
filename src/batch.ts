@@ -5,6 +5,96 @@ import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
+export class Batch {
+    /** The parameters used for this batch run */
+    public readonly pars: BatchPars;
+
+    /** The start time of the solution */
+    public readonly tStart: number;
+
+    /** The end time of the solution */
+    public readonly tEnd: number;
+
+    /** An array of solutions */
+    public readonly solution: InterpolatedSolution[];
+
+    private _extremes?: Extremes<Series[]>;
+
+    /** Construct a batch run, which will run the model many times
+     *
+     * @param Model The model constructor
+     *
+     * @param pars Parameters of the model, and information about the
+     * one to vary. Most easily generated with {@link batchParsRange}
+     * or {@link batchParsDisplace}.
+     *
+     * @param tStart Start of the integration (often 0)
+     *
+     * @param tEnd End of the integration (must be greater than `tStart`)
+     *
+     * @param control Optional control parameters to tune the integration
+     */
+    constructor(Model: OdinModelConstructable, pars: BatchPars,
+                tStart: number, tEnd: number,
+                control: Partial<DopriControlParam>) {
+        this.pars = pars;
+        this.tStart = tStart;
+        this.tEnd = tEnd;
+        this.solution = pars.values.map((v: number) => {
+            const p = updatePars(pars.base, pars.name, v);
+            return wodinRun(Model, p, tStart, tEnd, control);
+        });
+    }
+
+    /**
+     * Compute an the value of each series at a particular point in
+     * the solution
+     *
+     * @param time The time; you can use -Infinity and Infinity to
+     * represent the beginning and end of the solution
+     */
+    public valueAtTime(time: number): Series[] {
+        const y = this.solution.map(
+            (s: InterpolatedSolution) => s(time, time, 1));
+        return y[0].map((_: any, idxSeries: number) => ({
+            name: y[0][idxSeries].name,
+            x: this.pars.values,
+            y: y.map((s: Series[]) => s[idxSeries].y[0]),
+        }));
+    }
+
+    /**
+     * Return one of the extremes
+     *
+     * @param name The name of the extreme to look up; one of
+     *   * "yMin": The minimum value of each series
+     *   * "yMax": The maximum value of each series
+     *   * "tMin": The time that each series reached its minimum
+     *   * "tMax": The time that each series reached its maximum
+     */
+    public extreme(name: keyof Extremes<Series[]>): Series[] {
+        return this.findExtremes()[name];
+    }
+
+    private findExtremes(): Extremes<Series[]> {
+        if (this._extremes === undefined) {
+            const n = 51;
+            const y = this.solution.map(
+                (s: InterpolatedSolution) => s(this.tStart, this.tEnd, n));
+            const nms = y[0].map((x: Series) => x.name);
+            const extremes = loop(nms.length, (i: number) =>
+                                  y.map((s: Series[]) => findExtremes(s[i])));
+            this._extremes = {
+                tMin: extractExtremes("tMin", nms, this.pars.values, extremes),
+                tMax: extractExtremes("tMax", nms, this.pars.values, extremes),
+                yMin: extractExtremes("yMin", nms, this.pars.values, extremes),
+                yMax: extractExtremes("yMax", nms, this.pars.values, extremes),
+            }
+        }
+        return this._extremes;
+    }
+}
+
 /**
  * A set of parameters to run in a group, say for a sensitivity
  * analysis. Consists of a base set of parameters and a single
@@ -37,10 +127,7 @@ export interface BatchPars {
 export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          tStart: number, tEnd: number,
                          control: Partial<DopriControlParam>) {
-    return pars.values.map((v: number) => {
-        const p = updatePars(pars.base, pars.name, v);
-        return wodinRun(Model, p, tStart, tEnd, control);
-    });
+    return new Batch(Model, pars, tStart, tEnd, control);
 }
 
 /** Generate a set of parameters suitable to pass through to {@link
@@ -50,7 +137,7 @@ export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
  *
  * @param name Name of the parameter to change
  *
- * @param count The number of traces to run
+ * @param count The number of integrations to run
  *
  * @param logarithmic If `true`, the points are spaced on a
  * logarithmic scale rather than arithmetic.
@@ -87,7 +174,7 @@ export function batchParsRange(base: UserType, name: string, count: number,
  *
  * @param name Name of the parameter to change
  *
- * @param count The number of traces to run
+ * @param count The number of simulations to run
  *
  * @param logarithmic If `true`, the points are spaced on a
  * logarithmic scale rather than arithmetic.
@@ -123,59 +210,17 @@ function getParameterValueAsNumber(pars: UserType, name: string): number {
     return value;
 }
 
-export class BatchResult {
-    public readonly pars: BatchPars;
-    public readonly solution: InterpolatedSolution[];
-    public readonly tStart: number;
-    public readonly tEnd: number;
-
-    private _extremes?: Extremes<Series[]>;
-
-    constructor(pars: BatchPars, tStart: number, tEnd: number,
-                solution: InterpolatedSolution[]) {
-        this.pars = pars;
-        this.tStart = tStart;
-        this.tEnd = tEnd;
-        this.solution = solution;
-    }
-
-    public valueAtTime(time: number): Series[] {
-        const y = this.solution.map(
-            (s: InterpolatedSolution) => s(time, time, 1));
-        return y[0].map((_: any, idxSeries: number) => ({
-            name: y[0][idxSeries].name,
-            x: this.pars.values,
-            y: y.map((s: Series[]) => s[idxSeries].y[0]),
-        }));
-    }
-
-    public extreme(property: keyof Extremes<Series[]>): Series[] {
-        return this.findExtremes()[property];
-    }
-
-    public findExtremes(): Extremes<Series[]> {
-        if (this._extremes === undefined) {
-            const n = 51;
-            const y = this.solution.map(
-                (s: InterpolatedSolution) => s(this.tStart, this.tEnd, n));
-            const nms = y[0].map((x: Series) => x.name);
-            const extremes = loop(nms.length, (i: number) =>
-                                  y.map((s: Series[]) => findExtremes(s[i])));
-            this._extremes = {
-                tMin: extractExtremes("tMin", nms, this.pars.values, extremes),
-                tMax: extractExtremes("tMax", nms, this.pars.values, extremes),
-                yMin: extractExtremes("yMin", nms, this.pars.values, extremes),
-                yMax: extractExtremes("yMax", nms, this.pars.values, extremes),
-            }
-        }
-        return this._extremes;
-    }
-}
-
-interface Extremes<T> {
+/**
+ * Collection of extreme values; this is a templated type
+ */
+export interface Extremes<T> {
+    /** The time that a series reached its minimum */
     tMin: T;
+    /** The time that a series reached its maximum */
     tMax: T;
+    /** The minimum value of a series */
     yMin: T;
+    /** The maximum value of a series */
     yMax: T;
 }
 
@@ -192,12 +237,12 @@ function findExtremes(s: Series): Extremes<number> {
     return {tMax, tMin, yMax, yMin};
 }
 
-function extractExtremes(property: keyof Extremes<number>,
+function extractExtremes(name: keyof Extremes<number>,
                          names: string[], values: number[],
                          extremes: Extremes<number>[][]) {
     return loop(names.length, (i: number) => ({
         name: names[i],
         x: values,
-        y: extremes[i].map((el: Extremes<number>) => el[property]),
+        y: extremes[i].map((el: Extremes<number>) => el[name]),
     }));
 }

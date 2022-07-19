@@ -14,7 +14,9 @@ export {
     Solution,
 } from "./model";
 export {
+    Batch,
     BatchPars,
+    Extremes,
     batchParsDisplace,
     batchParsRange,
     batchRun,

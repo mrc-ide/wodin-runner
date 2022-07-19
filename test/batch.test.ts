@@ -1,4 +1,4 @@
-import { BatchResult, batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
+import { batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
@@ -81,9 +81,12 @@ describe("run sensitivity", () => {
         const upper = wodinRun(User, new Map<string, number>([["a", 4]]),
                                tStart, tEnd, control);
         const n = 11;
-        expect(res[2](tStart, tEnd, n)).toEqual(central(tStart, tEnd, n));
-        expect(res[0](tStart, tEnd, n)).toEqual(lower(tStart, tEnd, n));
-        expect(res[4](tStart, tEnd, n)).toEqual(upper(tStart, tEnd, n));
+        expect(res.solution[2](tStart, tEnd, n))
+            .toEqual(central(tStart, tEnd, n));
+        expect(res.solution[0](tStart, tEnd, n))
+            .toEqual(lower(tStart, tEnd, n));
+        expect(res.solution[4](tStart, tEnd, n))
+            .toEqual(upper(tStart, tEnd, n));
     });
 });
 
@@ -97,8 +100,7 @@ describe("can extract from a batch result", () => {
         const control = {};
         const tStart = 0;
         const tEnd = 10;
-        const sol = batchRun(User, pars, tStart, tEnd, control);
-        const obj = new BatchResult(pars, tStart, tEnd, sol);
+        const obj = batchRun(User, pars, tStart, tEnd, control);
         const res = obj.valueAtTime(tEnd);
         expect(res.length).toBe(1); // just one series here
         expect(res[0].name).toBe("x");
@@ -112,8 +114,7 @@ describe("can extract from a batch result", () => {
         const control = {};
         const tStart = 0;
         const tEnd = 10;
-        const sol = batchRun(Output, pars, tStart, tEnd, control);
-        const obj = new BatchResult(pars, tStart, tEnd, sol);
+        const obj = batchRun(Output, pars, tStart, tEnd, control);
         const res = obj.valueAtTime(tEnd);
         expect(res.length).toBe(2);
         expect(res[0].name).toBe("x");
