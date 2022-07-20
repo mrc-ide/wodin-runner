@@ -11,8 +11,11 @@ export type nullableArray<T> = Array<T | null>;
 export interface FitData {
     /** Array of time values; must be increasing */
     time: number[];
-    /** Observed data to fit to; must be the same length as `time` */
-    value: number[];
+    /** Observed data to fit to; must be the same length as
+     * `time`. Missing values (`null`) are allowed, and are ignored in
+     * the fit.
+     */
+    value: nullableArray<number>;
 }
 
 /** Interface to control parameters of a fit. A model will have some
@@ -72,11 +75,11 @@ export function updatePars(pars: FitPars, theta: number[]) {
     return ret;
 }
 
-export function sumOfSquares(x: (number | null)[], y: number[]) {
+export function sumOfSquares(x: nullableArray<number>, y: number[]) {
     let tot = 0;
     for (let i = 0; i < x.length; ++i) {
         const xi = x[i];
-        if (xi !== null) {
+        if (xi !== null && !isNaN(xi)) {
             tot += (xi - y[i]) ** 2;
         }
     }
