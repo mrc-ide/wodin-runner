@@ -151,4 +151,16 @@ describe("can fit a simple line", () => {
         const yFull = res.data.solutionAll(0, 6, 7);
         expect(yFull).toEqual([yFit]);
     });
+
+    it("Can fit a simple model with missing data", () => {
+        const time = [0, 1, 2, 3, 4, 5, 6];
+        const data = {time, value: time.map((t: number) => 1 + t * 4)}
+        data.value[3] = NaN;
+        const pars = {base: new Map<string, number>([["a", 0.5]]),
+                      vary: ["a"]};
+        const opt = wodinFit(models.User, data, pars, "x", {}, {});
+        const res = opt.run(100);
+        expect(res.converged).toBe(true);
+        expect(res.location[0]).toBeCloseTo(4);
+    });
 });

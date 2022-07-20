@@ -9,7 +9,10 @@ import type {UserType} from "./user";
 export interface FitData {
     /** Array of time values; must be increasing */
     time: number[];
-    /** Observed data to fit to; must be the same length as `time` */
+    /** Observed data to fit to; must be the same length as
+     * `time`. Missing values (`NaN`) are allowed, and are ignored in
+     * the fit.
+     */
     value: number[];
 }
 
@@ -73,7 +76,10 @@ export function updatePars(pars: FitPars, theta: number[]) {
 export function sumOfSquares(x: number[], y: number[]) {
     let tot = 0;
     for (let i = 0; i < x.length; ++i) {
-        tot += (x[i] - y[i]) ** 2;
+        const xi = x[i];
+        if (!isNaN(xi)) {
+            tot += (xi - y[i]) ** 2;
+        }
     }
     return tot;
 }
