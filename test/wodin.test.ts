@@ -1,5 +1,5 @@
 import {wodinFit, wodinRun} from "../src/wodin";
-import {grid} from "../src/model";
+import { grid } from "../src/util";
 import * as models from "./models";
 import {approxEqualArray} from "./helpers";
 
