@@ -14,4 +14,9 @@ describe("sumOfSquares", () => {
         const y = [6, 5, 4, 3, 2, 1];
         expect(sumOfSquares(x, y)).toEqual(70);
     });
+
+    it("allows missing values", () => {
+        expect(sumOfSquares([2, 3, null, 5, 6, 7], x)).toEqual(5);
+        expect(sumOfSquares(Array(6).fill(null), x)).toEqual(0);
+    });
 })

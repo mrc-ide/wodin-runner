@@ -3,6 +3,8 @@ import type { OdinModelConstructable, Solution } from "./model";
 import {interpolatedSolution, partialInterpolatedSolution, runModel} from "./model";
 import type {UserType} from "./user";
 
+export type nullableArray<T> = Array<T | null>;
+
 /** Interface for data to fit an odin model to; every data set has two
  *  series, even if they are derived from some larger data set.
  */
@@ -70,10 +72,13 @@ export function updatePars(pars: FitPars, theta: number[]) {
     return ret;
 }
 
-export function sumOfSquares(x: number[], y: number[]) {
+export function sumOfSquares(x: (number | null)[], y: number[]) {
     let tot = 0;
     for (let i = 0; i < x.length; ++i) {
-        tot += (x[i] - y[i]) ** 2;
+        const xi = x[i];
+        if (xi !== null) {
+            tot += (xi - y[i]) ** 2;
+        }
     }
     return tot;
 }
