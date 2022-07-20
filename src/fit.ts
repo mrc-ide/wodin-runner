@@ -3,8 +3,6 @@ import type { OdinModelConstructable, Solution } from "./model";
 import {interpolatedSolution, partialInterpolatedSolution, runModel} from "./model";
 import type {UserType} from "./user";
 
-export type nullableArray<T> = Array<T | null>;
-
 /** Interface for data to fit an odin model to; every data set has two
  *  series, even if they are derived from some larger data set.
  */
@@ -12,10 +10,10 @@ export interface FitData {
     /** Array of time values; must be increasing */
     time: number[];
     /** Observed data to fit to; must be the same length as
-     * `time`. Missing values (`null`) are allowed, and are ignored in
+     * `time`. Missing values (`NaN`) are allowed, and are ignored in
      * the fit.
      */
-    value: nullableArray<number>;
+    value: number[];
 }
 
 /** Interface to control parameters of a fit. A model will have some
@@ -75,11 +73,11 @@ export function updatePars(pars: FitPars, theta: number[]) {
     return ret;
 }
 
-export function sumOfSquares(x: nullableArray<number>, y: number[]) {
+export function sumOfSquares(x: number[], y: number[]) {
     let tot = 0;
     for (let i = 0; i < x.length; ++i) {
         const xi = x[i];
-        if (xi !== null && !isNaN(xi)) {
+        if (!isNaN(xi)) {
             tot += (xi - y[i]) ** 2;
         }
     }

@@ -16,8 +16,6 @@ describe("sumOfSquares", () => {
     });
 
     it("allows missing values", () => {
-        expect(sumOfSquares([2, 3, null, 5, 6, 7], x)).toEqual(5);
-        expect(sumOfSquares(Array(6).fill(null), x)).toEqual(0);
         expect(sumOfSquares([2, 3, NaN, 5, 6, 7], x)).toEqual(5);
         expect(sumOfSquares(Array(6).fill(NaN), x)).toEqual(0);
     });
