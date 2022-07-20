@@ -81,11 +81,11 @@ describe("run sensitivity", () => {
         const upper = wodinRun(User, new Map<string, number>([["a", 4]]),
                                tStart, tEnd, control);
         const n = 11;
-        expect(res.solution[2](tStart, tEnd, n))
+        expect(res.solutions[2](tStart, tEnd, n))
             .toEqual(central(tStart, tEnd, n));
-        expect(res.solution[0](tStart, tEnd, n))
+        expect(res.solutions[0](tStart, tEnd, n))
             .toEqual(lower(tStart, tEnd, n));
-        expect(res.solution[4](tStart, tEnd, n))
+        expect(res.solutions[4](tStart, tEnd, n))
             .toEqual(upper(tStart, tEnd, n));
     });
 });

@@ -16,7 +16,7 @@ export class Batch {
     public readonly tEnd: number;
 
     /** An array of solutions */
-    public readonly solution: InterpolatedSolution[];
+    public readonly solutions: InterpolatedSolution[];
 
     private _extremes?: Extremes<Series[]>;
 
@@ -40,7 +40,7 @@ export class Batch {
         this.pars = pars;
         this.tStart = tStart;
         this.tEnd = tEnd;
-        this.solution = pars.values.map((v: number) => {
+        this.solutions = pars.values.map((v: number) => {
             const p = updatePars(pars.base, pars.name, v);
             return wodinRun(Model, p, tStart, tEnd, control);
         });
@@ -54,7 +54,7 @@ export class Batch {
      * represent the beginning and end of the solution
      */
     public valueAtTime(time: number): Series[] {
-        const y = this.solution.map(
+        const y = this.solutions.map(
             (s: InterpolatedSolution) => s(time, time, 1));
         return y[0].map((_: any, idxSeries: number) => ({
             name: y[0][idxSeries].name,
@@ -84,7 +84,7 @@ export class Batch {
             // dfoptim, then some additional work in findExtremes
             // (which will need to accept the solution object too).
             const n = 501;
-            const y = this.solution.map(
+            const y = this.solutions.map(
                 (s: InterpolatedSolution) => s(this.tStart, this.tEnd, n));
             const nms = y[0].map((x: Series) => x.name);
             const extremes = loop(nms.length, (i: number) =>
