@@ -1,4 +1,4 @@
-import {wodinFit, wodinRun} from "../src/wodin";
+import { wodinFit, wodinFitBaseline, wodinRun } from "../src/wodin";
 import { grid } from "../src/util";
 import * as models from "./models";
 import {approxEqualArray} from "./helpers";
@@ -162,5 +162,29 @@ describe("can fit a simple line", () => {
         const res = opt.run(100);
         expect(res.converged).toBe(true);
         expect(res.location[0]).toBeCloseTo(4);
+    });
+});
+
+describe("can run a baseline", () => {
+    it("Can fit a simple model", () => {
+        const time = [0, 1, 2, 3, 4, 5, 6];
+        const data = {time, value: time.map((t: number) => 1 + t * 4)}
+        const pars = new Map<string, number>([["a", 0.5]]);
+        const modelledSeries = "x";
+        const controlODE = {};
+        const res = wodinFitBaseline(models.User, data, pars, modelledSeries,
+                                     controlODE);
+        // sum((1 + (1:6) * 0.5 - (1 + (1:6) * 4))^2)
+        expect(res.value).toBeCloseTo(1114.75);
+        expect(res.data.names).toEqual(["x"]);
+        expect(res.data.pars).toEqual(pars);
+
+        const yFit = res.data.solutionFit(0, 6, 7);
+        expect(yFit.name).toEqual("x");
+        expect(yFit.x).toEqual(time);
+        expect(yFit.y).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4]);
+
+        const yFull = res.data.solutionAll(0, 6, 7);
+        expect(yFull).toEqual([yFit]);
     });
 });

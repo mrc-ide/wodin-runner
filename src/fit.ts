@@ -1,6 +1,14 @@
+import type { Result } from "dfoptim";
+
 import { base } from "./base";
 import type { OdinModelConstructable, Solution } from "./model";
-import {interpolatedSolution, partialInterpolatedSolution, runModel} from "./model";
+import {
+    InterpolatedSeries,
+    interpolatedSolution,
+    InterpolatedSolution,
+    partialInterpolatedSolution,
+    runModel,
+} from "./model";
 import type {UserType} from "./user";
 
 /** Interface for data to fit an odin model to; every data set has two
@@ -32,13 +40,40 @@ export interface FitPars {
     vary: string[];
 }
 
+/**
+ * Result of fitting a model, returned by the `result` method on
+ * `Simplex` after initialisation with {@link wodinFit}. Also returned
+ * by {@link wodinFitBaseline}.
+ */
+export interface FitResult extends Result {
+    data: {
+        /** The names of all traces returned by the model */
+        names: string[];
+        /** The full model parameters, as a Map (i.e., suitable to
+         *   pass back into an {@link OdinModelConstructable} object or {@link
+         *   wodinRun})
+         */
+        pars: UserType;
+        /** The solution of all series; an interpolating
+         *   function as as would be returned by {@link wodinRun}
+         */
+        solutionAll: InterpolatedSolution;
+        /** The solution to a just the modelled series being
+         *    fit, as a single trace
+         */
+        solutionFit: InterpolatedSeries;
+    };
+    /** The sum of squares for this set of parameters */
+    value: number;
+}
+
 export function fitTarget(Model: OdinModelConstructable,
                           data: FitData, pars: FitPars,
                           modelledSeries: string,
                           control: any) {
     const tStart = data.time[0];
     const tEnd = data.time[data.time.length - 1];
-    return (theta: number[]) => {
+    return (theta: number[]): FitResult => {
         const p = updatePars(pars, theta);
         const model = new Model(base, p, "error");
         const y0 = null;

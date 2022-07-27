@@ -1,7 +1,7 @@
-export {wodinFit, wodinRun} from "./wodin";
+export {wodinFit, wodinFitBaseline, wodinRun} from "./wodin";
 export {PkgWrapper} from "./pkg";
 export {BaseType, base} from "./base";
-export {FitData, FitPars} from "./fit";
+export {FitData, FitPars, FitResult} from "./fit";
 export {
     InterpolatedSeries,
     InterpolatedSolution,
