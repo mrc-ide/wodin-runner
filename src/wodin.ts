@@ -51,6 +51,8 @@ export function wodinRun(Model: OdinModelConstructable, pars: UserType,
  * * `solutionFit`: The solution to a just the modelled series being
  *    fit, as a single trace
  *
+ * See {@link FitResult}
+ *
  * @param Model The model constructor
  *
  * @param data The data to fit to; there will be one time and one data
@@ -76,4 +78,17 @@ export function wodinFit(Model: OdinModelConstructable, data: FitData,
     // everything variable is in fact a number)
     const start = pars.vary.map((nm: string) => pars.base.get(nm) as number);
     return new Simplex(target, start, controlFit);
+}
+
+/**
+ * Create a baseline for a fit, before the parameters to be varied in
+ * the fit are known. This runs an integration with the base
+ * parameters and returns everything that {@link wodinFit} would.
+ */
+export function wodinFitBaseline(Model: OdinModelConstructable, data: FitData,
+                                 pars: UserType, modelledSeries: string,
+                                 controlODE: Partial<DopriControlParam>) {
+    const parsFit = { base: pars, vary: [] };
+    const target = fitTarget(Model, data, parsFit, modelledSeries, controlODE);
+    return target([]);
 }
