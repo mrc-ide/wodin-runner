@@ -61,7 +61,9 @@ export function interpolateCheckY(dimArg: number[], dimTarget: number[],
 
 /** Check that the integration times are compatible with the
  * interpolation functions (i.e., that they would not cause
- * extrapolation). If the model does not have
+ * extrapolation). If the model does not require interpolation then
+ * this will set a critical time of `Infinity` (i.e., there is no
+ * point the solver should stop before).
  *
  * @param tStart Start time of the integration
  *
