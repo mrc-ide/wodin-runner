@@ -44,15 +44,15 @@ export type FullSolution = (t: number[]) => number[][];
  */
 export interface SeriesSet {
     /** Names of elements in the series */
-    names: string[],
+    names: string[];
     /** The domain that the series is available at, typically timea  */
-    x: number[],
+    x: number[];
     /**
      * The values of traces; will have length `names.length` and each
      * element will have length `x.length`, so that `y[i][j]` is the
      * `j`th time point of the `i`th series
      */
-    y: number[][]
+    y: number[][];
 }
 
 /**
