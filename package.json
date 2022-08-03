@@ -1,6 +1,6 @@
 {
     "name": "@reside-ic/odinjs",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "odin js/ts support",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
@@ -39,6 +39,7 @@
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {
+        "@reside-ic/interpolate": "^0.0.1",
         "dfoptim": "^0.0.5",
         "dopri": "^0.0.12"
     }

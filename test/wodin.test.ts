@@ -1,5 +1,7 @@
 import { wodinFit, wodinFitBaseline, wodinRun } from "../src/wodin";
-import { grid } from "../src/util";
+import {UserTensor, UserValue} from "../src/user";
+import {grid} from "../src/util";
+
 import * as models from "./models";
 import {approxEqualArray} from "./helpers";
 
@@ -85,6 +87,34 @@ describe("can run basic models", () => {
         expect(y[1].name).toEqual("y");
         expect(y[1].x).toEqual(expectedT);
         expect(approxEqualArray(y[1].y, expectedY, 1e-3)).toBe(true);
+    });
+
+    it("runs a model with interpolation", () => {
+        const pi = Math.PI;
+        const tp = grid(0, pi, 31);
+        const zp = tp.map((t: number) => Math.sin(t));
+        const user = new Map<string, number | number[]>([["tp", tp], ["zp", zp]]);
+        const control : any = {};
+        const solution = wodinRun(models.InterpolateSpline, user, 0, pi, control);
+
+        const expectedT = grid(0, pi, 11);
+        const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
+        const y = solution(0, pi, 11);
+        expect(approxEqualArray(y[0].y, expectedY, 1e-4)).toBe(true);
+    });
+
+    it("runs a model with interpolated arrays", () => {
+        const tp = [0, 1, 2];
+        const zp: UserTensor = {data: [0, 1, 0, 0, 2, 0], dim: [3, 2]};
+        const user = new Map<string, UserValue>([["tp", tp], ["zp", zp]]);
+        const control: any = {};
+        const solution = wodinRun(models.InterpolateArray, user, 0, 3, control);
+        const y = solution(0, 3, 51);
+        const t = y[0].x;
+        const z1 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 1 : t - 1));
+        const z2 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 2 : 2 * (t - 1)));
+        expect(approxEqualArray(y[0].y, z1, 6e-5)).toBe(true);
+        expect(approxEqualArray(y[1].y, z2, 6e-5)).toBe(true);
     });
 });
 
