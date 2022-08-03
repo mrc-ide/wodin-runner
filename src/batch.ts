@@ -1,6 +1,10 @@
 import type { DopriControlParam } from "dopri";
 
-import type { InterpolatedSolution, OdinModelConstructable, Series } from "./model";
+import type {
+    InterpolatedSolution,
+    OdinModelConstructable,
+    SeriesSet,
+} from "./model";
 import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";

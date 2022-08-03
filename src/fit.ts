@@ -3,10 +3,8 @@ import type { Result } from "dfoptim";
 import { base } from "./base";
 import type { OdinModelConstructable, Solution } from "./model";
 import {
-    InterpolatedSeries,
     interpolatedSolution,
     InterpolatedSolution,
-    partialInterpolatedSolution,
     runModel,
 } from "./model";
 import type {UserType} from "./user";
@@ -57,11 +55,7 @@ export interface FitResult extends Result {
         /** The solution of all series; an interpolating
          *   function as as would be returned by {@link wodinRun}
          */
-        solutionAll: InterpolatedSolution;
-        /** The solution to a just the modelled series being
-         *    fit, as a single trace
-         */
-        solutionFit: InterpolatedSeries;
+        solution: InterpolatedSolution;
     };
     /** The sum of squares for this set of parameters */
     value: number;
@@ -87,10 +81,8 @@ export function fitTarget(Model: OdinModelConstructable,
             data: {
                 names,
                 pars: p,
-                solutionAll: interpolatedSolution(
+                solution: interpolatedSolution(
                     solution, names, tStart, tEnd),
-                solutionFit: partialInterpolatedSolution(
-                    solution, modelledSeries, idxModel, tStart, tEnd),
             },
             /** Goodness of fit, the sum-of-squared differences
              * between the observed data and the modelled series

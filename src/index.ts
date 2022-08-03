@@ -3,14 +3,13 @@ export {PkgWrapper} from "./pkg";
 export {BaseType, base} from "./base";
 export {FitData, FitPars, FitResult} from "./fit";
 export {
-    InterpolatedSeries,
     InterpolatedSolution,
     OdinModelConstructable,
     OdinModel,
     OdinModelBase,
     OdinModelODE,
     OdinModelDDE,
-    Series,
+    SeriesSet,
     Solution,
 } from "./model";
 export {
