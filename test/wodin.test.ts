@@ -86,7 +86,7 @@ describe("can run basic models", () => {
         const expectedT = grid(0, pi, 11);
         const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
         const y = solution(0, pi, 11);
-        expect(approxEqualArray(y[0].y, expectedY, 1e-4)).toBe(true);
+        expect(approxEqualArray(y.y[0], expectedY, 1e-4)).toBe(true);
     });
 
     it("runs a model with interpolated arrays", () => {
@@ -96,11 +96,11 @@ describe("can run basic models", () => {
         const control: any = {};
         const solution = wodinRun(models.InterpolateArray, user, 0, 3, control);
         const y = solution(0, 3, 51);
-        const t = y[0].x;
+        const t = y.x;
         const z1 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 1 : t - 1));
         const z2 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 2 : 2 * (t - 1)));
-        expect(approxEqualArray(y[0].y, z1, 6e-5)).toBe(true);
-        expect(approxEqualArray(y[1].y, z2, 6e-5)).toBe(true);
+        expect(approxEqualArray(y.y[0], z1, 6e-5)).toBe(true);
+        expect(approxEqualArray(y.y[1], z2, 6e-5)).toBe(true);
     });
 });
 
