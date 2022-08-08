@@ -21,10 +21,10 @@ describe("can run basic models", () => {
         const y = solution(0, 10, 11);
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
-        expect(y.length).toEqual(1);
-        expect(y[0].name).toEqual("x");
-        expect(y[0].x).toEqual(expectedT);
-        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
+        expect(y.names).toEqual(["x"]);
+        expect(y.x).toEqual(expectedT);
+        expect(y.y.length).toBe(1);
+        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
     });
 
     it("runs model with output, with expected output", () => {
@@ -36,15 +36,11 @@ describe("can run basic models", () => {
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = expectedX.map((x: number) => x * 2);
-        expect(y.length).toEqual(2);
 
-        expect(y[0].name).toEqual("x");
-        expect(y[0].x).toEqual(expectedT);
-        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
-
-        expect(y[1].name).toEqual("y");
-        expect(y[1].x).toEqual(expectedT);
-        expect(approxEqualArray(y[1].y, expectedY)).toBe(true);
+        expect(y.names).toEqual(["x", "y"]);
+        expect(y.x).toEqual(expectedT);
+        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
+        expect(approxEqualArray(y.y[1], expectedY)).toBe(true);
     });
 
     it("runs delay model without error", () => {
@@ -57,15 +53,10 @@ describe("can run basic models", () => {
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = expectedT.map((t: number) => Math.max(1, t - 1));
 
-        expect(y.length).toEqual(2);
-
-        expect(y[0].name).toEqual("x");
-        expect(y[0].x).toEqual(expectedT);
-        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
-
-        expect(y[1].name).toEqual("y");
-        expect(y[1].x).toEqual(expectedT);
-        expect(approxEqualArray(y[1].y, expectedY, 1e-3)).toBe(true);
+        expect(y.names).toEqual(["x", "y"]);
+        expect(y.x).toEqual(expectedT);
+        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
+        expect(approxEqualArray(y.y[1], expectedY, 1e-3)).toBe(true);
     });
 
     it("runs delay model without output without error", () => {
@@ -78,15 +69,10 @@ describe("can run basic models", () => {
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = [1, 2, 3, 4.5, 7, 10.5, 15, 20.5, 27, 34.5, 43];
 
-        expect(y.length).toEqual(2);
-
-        expect(y[0].name).toEqual("x");
-        expect(y[0].x).toEqual(expectedT);
-        expect(approxEqualArray(y[0].y, expectedX)).toBe(true);
-
-        expect(y[1].name).toEqual("y");
-        expect(y[1].x).toEqual(expectedT);
-        expect(approxEqualArray(y[1].y, expectedY, 1e-3)).toBe(true);
+        expect(y.names).toEqual(["x", "y"]);
+        expect(y.x).toEqual(expectedT);
+        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
+        expect(approxEqualArray(y.y[1], expectedY, 1e-3)).toBe(true);
     });
 
     it("runs a model with interpolation", () => {
@@ -100,7 +86,7 @@ describe("can run basic models", () => {
         const expectedT = grid(0, pi, 11);
         const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
         const y = solution(0, pi, 11);
-        expect(approxEqualArray(y[0].y, expectedY, 1e-4)).toBe(true);
+        expect(approxEqualArray(y.y[0], expectedY, 1e-4)).toBe(true);
     });
 
     it("runs a model with interpolated arrays", () => {
@@ -110,11 +96,11 @@ describe("can run basic models", () => {
         const control: any = {};
         const solution = wodinRun(models.InterpolateArray, user, 0, 3, control);
         const y = solution(0, 3, 51);
-        const t = y[0].x;
+        const t = y.x;
         const z1 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 1 : t - 1));
         const z2 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 2 : 2 * (t - 1)));
-        expect(approxEqualArray(y[0].y, z1, 6e-5)).toBe(true);
-        expect(approxEqualArray(y[1].y, z2, 6e-5)).toBe(true);
+        expect(approxEqualArray(y.y[0], z1, 6e-5)).toBe(true);
+        expect(approxEqualArray(y.y[1], z2, 6e-5)).toBe(true);
     });
 });
 
@@ -148,10 +134,9 @@ describe("can set user", () => {
         const y = solution(0, 10, 11);
         const expectedX = grid(0, 10, 11);
         const expectedY = expectedX.map((t: number) => t * 2 + 1);
-        expect(y.length).toEqual(1);
-        expect(y[0].name).toEqual("x");
-        expect(y[0].x).toEqual(expectedX);
-        expect(approxEqualArray(y[0].y, expectedY)).toBe(true);
+        expect(y.names).toEqual(["x"]);
+        expect(y.x).toEqual(expectedX);
+        expect(approxEqualArray(y.y[0], expectedY)).toBe(true);
     })
 });
 
@@ -173,13 +158,10 @@ describe("can fit a simple line", () => {
         expect(res.value).toBeCloseTo(0);
         expect(res.data.pars.get("a")).toEqual(res.location[0]);
 
-        const yFit = res.data.solutionFit(0, 6, 7);
-        expect(yFit.name).toEqual("x");
+        const yFit = res.data.solution(0, 6, 7);
+        expect(yFit.names).toEqual(["x"]);
         expect(yFit.x).toEqual(time);
-        expect(approxEqualArray(yFit.y, data.value)).toBe(true);
-
-        const yFull = res.data.solutionAll(0, 6, 7);
-        expect(yFull).toEqual([yFit]);
+        expect(approxEqualArray(yFit.y[0], data.value)).toBe(true);
     });
 
     it("Can fit a simple model with missing data", () => {
@@ -209,12 +191,9 @@ describe("can run a baseline", () => {
         expect(res.data.names).toEqual(["x"]);
         expect(res.data.pars).toEqual(pars);
 
-        const yFit = res.data.solutionFit(0, 6, 7);
-        expect(yFit.name).toEqual("x");
+        const yFit = res.data.solution(0, 6, 7);
+        expect(yFit.names).toEqual(["x"]);
         expect(yFit.x).toEqual(time);
-        expect(yFit.y).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4]);
-
-        const yFull = res.data.solutionAll(0, 6, 7);
-        expect(yFull).toEqual([yFit]);
+        expect(yFit.y[0]).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4]);
     });
 });
