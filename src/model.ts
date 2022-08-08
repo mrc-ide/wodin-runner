@@ -45,7 +45,7 @@ export type FullSolution = (t: number[]) => number[][];
 export interface SeriesSet {
     /** Names of elements in the series */
     names: string[];
-    /** The domain that the series is available at, typically timea  */
+    /** The domain that the series is available at, typically time  */
     x: number[];
     /**
      * The values of traces; will have length `names.length` and each
