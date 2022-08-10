@@ -58,6 +58,12 @@ describe("Can generate sensible sets of parameters", () => {
             .toThrow("Expected a number for 'a'");
     });
 
+    it("Requires that log scaled values have strictly positive lower bound", () => {
+        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        expect(() => batchParsRange(user, "a", 5, true, 0, 1.5))
+            .toThrow("Lower bound must be greater than 0 for logarithmic scale");
+    });
+
     it("Updates parameter values correctly", () => {
         const user = new Map<string, number>([["a", 1], ["b", 2]]);
         const p = updatePars(user, "a", 3);
