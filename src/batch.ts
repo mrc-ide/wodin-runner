@@ -177,6 +177,9 @@ export function batchParsRange(base: UserType, name: string, count: number,
     if (count < 2) {
         throw Error("Must include at least 2 traces in the batch");
     }
+    if (logarithmic && min <= 0) {
+        throw Error("Lower bound must be greater than 0 for logarithmic scale");
+    }
     const values = logarithmic ?
         gridLog(min, max, count) : grid(min, max, count);
     return {base, name, values};
