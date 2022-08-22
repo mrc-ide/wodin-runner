@@ -45,6 +45,8 @@ export interface FitPars {
  */
 export interface FitResult extends Result {
     data: {
+        /** The end time of the integration */
+        endTime: number;
         /** The names of all traces returned by the model */
         names: string[];
         /** The full model parameters, as a Map (i.e., suitable to
@@ -79,6 +81,7 @@ export function fitTarget(Model: OdinModelConstructable,
         return {
             /** Additional data alongside the goodness of fit, see above */
             data: {
+                endTime: tEnd,
                 names,
                 pars: p,
                 solution: interpolatedSolution(

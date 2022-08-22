@@ -157,6 +157,7 @@ describe("can fit a simple line", () => {
         expect(res.location[0]).toBeCloseTo(4);
         expect(res.value).toBeCloseTo(0);
         expect(res.data.pars.get("a")).toEqual(res.location[0]);
+        expect(res.data.endTime).toEqual(6);
 
         const yFit = res.data.solution(0, 6, 7);
         expect(yFit.names).toEqual(["x"]);
@@ -190,6 +191,7 @@ describe("can run a baseline", () => {
         expect(res.value).toBeCloseTo(1114.75);
         expect(res.data.names).toEqual(["x"]);
         expect(res.data.pars).toEqual(pars);
+        expect(res.data.endTime).toEqual(6);
 
         const yFit = res.data.solution(0, 6, 7);
         expect(yFit.names).toEqual(["x"]);
