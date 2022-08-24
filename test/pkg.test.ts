@@ -21,7 +21,7 @@ describe("wrapper", () => {
     });
 
     it("Can run the rhs with output", () => {
-        const user = { "a": 1 };
+        const user = { a: 1 };
         const control : any = {};
         const mod = new PkgWrapper(models.Output, user, "error");
         expect(mod.rhs(0, [1])).toEqual({"output": [2], "state": [1]});
@@ -48,7 +48,7 @@ describe("wrapper", () => {
     })
 
     it("Can set user variables", () => {
-        const user = { "a": 1 };
+        const user = { a: 1 };
         const control: any = {};
         const mod = new PkgWrapper(models.User, user, "error");
         const t = 0;

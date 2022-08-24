@@ -188,11 +188,11 @@ describe("setUserArrayFixed", () => {
 
 describe("setUserArrayVariable", () => {
     const pars = {
-        "a": 1,
-        "b": [1, 2, 3],
-        "c": {data: [1, 2, 3], dim: [3]},
-        "d": {data: [1, 2, 3, 4, 5, 6], dim: [2, 3]},
-        "e": {data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dim: [2, 3, 2]},
+        a: 1,
+        b: [1, 2, 3],
+        c: {data: [1, 2, 3], dim: [3]},
+        d: {data: [1, 2, 3, 4, 5, 6], dim: [2, 3]},
+        e: {data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dim: [2, 3, 2]},
     };
     it("Can fetch a variable and save sizes", () => {
         const size = [0, 0, 0];

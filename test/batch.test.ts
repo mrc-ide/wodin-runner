@@ -53,7 +53,7 @@ describe("Can generate sensible sets of parameters", () => {
     });
 
     it("Requires a scalar for the updated parameter", () => {
-        const user = { "a": [1, 2] };
+        const user = { a: [1, 2] };
         expect(() => batchParsRange(user, "a", 5, false, 0, 2))
             .toThrow("Expected a number for 'a'");
     });
