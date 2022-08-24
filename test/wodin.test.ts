@@ -14,7 +14,7 @@ describe("grid", () => {
 
 describe("can run basic models", () => {
     it("runs minimal model with expected output", () => {
-        const user = new Map<string, number>();
+        const user = {};
         const control : any = {};
         const solution = wodinRun(models.Minimal, user, 0, 10, control);
 
@@ -28,7 +28,7 @@ describe("can run basic models", () => {
     });
 
     it("runs model with output, with expected output", () => {
-        const user = new Map<string, number>([["a", 1]]);
+        const user = { "a": 1 };
         const control : any = {};
         const solution = wodinRun(models.Output, user, 0, 10, control);
 
@@ -44,7 +44,7 @@ describe("can run basic models", () => {
     });
 
     it("runs delay model without error", () => {
-        const user = new Map<string, number>();
+        const user = {};
         const control : any = {};
         const solution = wodinRun(models.Delay, user, 0, 10, control);
         const y = solution(0, 10, 11);
@@ -60,7 +60,7 @@ describe("can run basic models", () => {
     });
 
     it("runs delay model without output without error", () => {
-        const user = new Map<string, number>();
+        const user = {};
         const control : any = {};
         const solution = wodinRun(models.DelayNoOutput, user, 0, 10, control);
         const y = solution(0, 10, 11);
@@ -79,7 +79,7 @@ describe("can run basic models", () => {
         const pi = Math.PI;
         const tp = grid(0, pi, 31);
         const zp = tp.map((t: number) => Math.sin(t));
-        const user = new Map<string, number | number[]>([["tp", tp], ["zp", zp]]);
+        const user = { tp, zp };
         const control : any = {};
         const solution = wodinRun(models.InterpolateSpline, user, 0, pi, control);
 
@@ -92,7 +92,7 @@ describe("can run basic models", () => {
     it("runs a model with interpolated arrays", () => {
         const tp = [0, 1, 2];
         const zp: UserTensor = {data: [0, 1, 0, 0, 2, 0], dim: [3, 2]};
-        const user = new Map<string, UserValue>([["tp", tp], ["zp", zp]]);
+        const user = { tp, zp };
         const control: any = {};
         const solution = wodinRun(models.InterpolateArray, user, 0, 3, control);
         const y = solution(0, 3, 51);
@@ -106,8 +106,8 @@ describe("can run basic models", () => {
 
 describe("can set user", () => {
     it("Agrees with mininal model", () => {
-        const pars1 = new Map<string, number>();
-        const pars2 = new Map<string, number>([["a", 1]]);
+        const pars1 = {};
+        const pars2 = { "a": 1 };
         const control : any = {};
         const solution1 = wodinRun(models.Minimal, pars1, 0, 10, control);
         const solution2 = wodinRun(models.User, pars2, 0, 10, control);
@@ -117,8 +117,8 @@ describe("can set user", () => {
     });
 
     it("Can pick up default values", () => {
-        const pars1 = new Map<string, number>();
-        const pars2 = new Map<string, number>([["a", 1]]);
+        const pars1 = {};
+        const pars2 = { "a": 1 };
         const control : any = {};
         const solution1 = wodinRun(models.User, pars1, 0, 10, control);
         const solution2 = wodinRun(models.User, pars2, 0, 10, control);
@@ -128,7 +128,7 @@ describe("can set user", () => {
     });
 
     it("Varies by changing parameters", () => {
-        const pars = new Map<string, number>([["a", 2]]);
+        const pars = { "a": 2 };
         const control : any = {};
         const solution = wodinRun(models.User, pars, 0, 10, control);
         const y = solution(0, 10, 11);
@@ -144,7 +144,7 @@ describe("can fit a simple line", () => {
     it("Can fit a simple model", () => {
         const time = [0, 1, 2, 3, 4, 5, 6];
         const data = {time, value: time.map((t: number) => 1 + t * 4)}
-        const pars = {base: new Map<string, number>([["a", 0.5]]),
+        const pars = {base: { a: 0.5 },
                       vary: ["a"]};
         const modelledSeries = "x";
         const controlODE = {};
@@ -156,7 +156,7 @@ describe("can fit a simple line", () => {
         expect(res.converged).toBe(true);
         expect(res.location[0]).toBeCloseTo(4);
         expect(res.value).toBeCloseTo(0);
-        expect(res.data.pars.get("a")).toEqual(res.location[0]);
+        expect(res.data.pars["a"]).toEqual(res.location[0]);
         expect(res.data.endTime).toEqual(6);
 
         const yFit = res.data.solution(0, 6, 7);
@@ -169,7 +169,7 @@ describe("can fit a simple line", () => {
         const time = [0, 1, 2, 3, 4, 5, 6];
         const data = {time, value: time.map((t: number) => 1 + t * 4)}
         data.value[3] = NaN;
-        const pars = {base: new Map<string, number>([["a", 0.5]]),
+        const pars = {base: { a: 0.5 },
                       vary: ["a"]};
         const opt = wodinFit(models.User, data, pars, "x", {}, {});
         const res = opt.run(100);
@@ -182,7 +182,7 @@ describe("can run a baseline", () => {
     it("Can fit a simple model", () => {
         const time = [0, 1, 2, 3, 4, 5, 6];
         const data = {time, value: time.map((t: number) => 1 + t * 4)}
-        const pars = new Map<string, number>([["a", 0.5]]);
+        const pars = { "a": 0.5 };
         const modelledSeries = "x";
         const controlODE = {};
         const res = wodinFitBaseline(models.User, data, pars, modelledSeries,

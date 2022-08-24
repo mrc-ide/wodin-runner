@@ -7,7 +7,7 @@ import { Output, User } from "./models";
 
 describe("Can generate sensible sets of parameters", () => {
     it("Generates a simple sequence", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         const res = batchParsRange(user, "a", 5, false, 0, 2);
         expect(res.base).toBe(user);
         expect(res.name).toBe("a");
@@ -15,7 +15,7 @@ describe("Can generate sensible sets of parameters", () => {
     });
 
     it("Generates a logarithmic sequence", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         const res = batchParsRange(user, "a", 5, true, 0.5, 1.5);
         expect(res.base).toBe(user);
         expect(res.name).toBe("a");
@@ -23,7 +23,7 @@ describe("Can generate sensible sets of parameters", () => {
     });
 
     it("Generates a displaced sequence", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         const res = batchParsDisplace(user, "b", 5, false, 50);
         expect(res.base).toBe(user);
         expect(res.name).toBe("b");
@@ -31,7 +31,7 @@ describe("Can generate sensible sets of parameters", () => {
     });
 
     it("Requires that central values lie within the requested range", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         expect(() => batchParsRange(user, "a", 5, false, 3, 4))
             .toThrow("Expected lower bound to be no greater than 1");
         expect(() => batchParsRange(user, "a", 5, false, -2, -1))
@@ -41,40 +41,40 @@ describe("Can generate sensible sets of parameters", () => {
     });
 
     it("Requires that we have at least two points in the range", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         expect(() => batchParsRange(user, "a", 1, false, 0, 2))
             .toThrow("Must include at least 2 traces in the batch");
     });
 
     it("Requires that the updated parameter exists", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         expect(() => batchParsRange(user, "c", 5, false, 0, 2))
             .toThrow("Expected a value for 'c'");
     });
 
     it("Requires a scalar for the updated parameter", () => {
-        const user = new Map<string, number | number[]>([["a", [1, 2]]]);
+        const user = { "a": [1, 2] };
         expect(() => batchParsRange(user, "a", 5, false, 0, 2))
             .toThrow("Expected a number for 'a'");
     });
 
     it("Requires that log scaled values have strictly positive lower bound", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         expect(() => batchParsRange(user, "a", 5, true, 0, 1.5))
             .toThrow("Lower bound must be greater than 0 for logarithmic scale");
     });
 
     it("Updates parameter values correctly", () => {
-        const user = new Map<string, number>([["a", 1], ["b", 2]]);
+        const user = { a: 1, b: 2 };
         const p = updatePars(user, "a", 3);
-        expect(p.get("a")).toBe(3);
-        expect(p.get("b")).toBe(2);
+        expect(p["a"]).toBe(3);
+        expect(p["b"]).toBe(2);
     });
 });
 
 describe("run sensitivity", () => {
     it("runs without error", () => {
-        const user = new Map<string, number>([["a", 2]]);
+        const user = { a: 2 };
         const pars = batchParsRange(user, "a", 5, false, 0, 4);
         const control = {};
         const tStart = 0;
@@ -82,10 +82,8 @@ describe("run sensitivity", () => {
         const res = batchRun(User, pars, tStart, tEnd, control);
 
         const central = wodinRun(User, user, tStart, tEnd, control);
-        const lower = wodinRun(User, new Map<string, number>([["a", 0]]),
-                               tStart, tEnd, control);
-        const upper = wodinRun(User, new Map<string, number>([["a", 4]]),
-                               tStart, tEnd, control);
+        const lower = wodinRun(User, { a: 0 }, tStart, tEnd, control);
+        const upper = wodinRun(User, { a: 4 }, tStart, tEnd, control);
         const n = 11;
         expect(res.solutions[2](tStart, tEnd, n))
             .toEqual(central(tStart, tEnd, n));
@@ -100,7 +98,7 @@ describe("can extract from a batch result", () => {
     // TODO: we need a model with both parameters and multiple traces
     // here to confirm this is correct.
     it("Extracts state at a particular time", () => {
-        const user = new Map<string, number>([["a", 2]]);
+        const user = { a: 2 };
         const pars = batchParsRange(user, "a", 5, false, 0, 4);
         const control = {};
         const tStart = 0;
@@ -113,7 +111,7 @@ describe("can extract from a batch result", () => {
     });
 
     it("Extracts state at a particular time for multivariable models", () => {
-        const user = new Map<string, number>([["a", 2]]);
+        const user = { a: 2 };
         const pars = batchParsRange(user, "a", 5, false, 0, 4);
         const control = {};
         const tStart = 0;

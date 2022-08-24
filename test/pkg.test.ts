@@ -5,7 +5,7 @@ import {approxEqualArray} from "./helpers";
 
 describe("wrapper", () => {
     it("Can create a simple wrapped model", () => {
-        const user = new Map<string, number>();
+        const user = {};
         const control : any = {};
         const mod = new PkgWrapper(models.Minimal, user, "error");
 
@@ -21,14 +21,14 @@ describe("wrapper", () => {
     });
 
     it("Can run the rhs with output", () => {
-        const user = new Map<string, number>([["a", 1]]);
+        const user = { "a": 1 };
         const control : any = {};
         const mod = new PkgWrapper(models.Output, user, "error");
         expect(mod.rhs(0, [1])).toEqual({"output": [2], "state": [1]});
     });
 
     it("Refuses to run rhs for dde models", () => {
-        const user = new Map<string, number>();
+        const user = {};
         const control : any = {};
         const mod = new PkgWrapper(models.Delay, user, "error");
         expect(() => mod.rhs(0, [0])).toThrow(
@@ -36,7 +36,7 @@ describe("wrapper", () => {
     });
 
     it("Can override the initial conditions", () => {
-        const user = new Map<string, number>();
+        const user = {};
         const control : any = {};
         const mod = new PkgWrapper(models.Minimal, user, "error");
 
@@ -48,16 +48,16 @@ describe("wrapper", () => {
     })
 
     it("Can set user variables", () => {
-        const user = new Map<string, number>([["a", 1]]);
+        const user = { "a": 1 };
         const control: any = {};
         const mod = new PkgWrapper(models.User, user, "error");
         const t = 0;
         const y = [0];
         expect(mod.rhs(t, y).state).toEqual([1]);
-        user.set("a", 2);
+        user["a"] = 2;
         mod.setUser(user, "error");
         expect(mod.rhs(t, y).state).toEqual([2]);
-        mod.setUser(new Map<string, number>(), "error");
+        mod.setUser({}, "error");
         expect(mod.rhs(t, y).state).toEqual([2]);
     });
 });
