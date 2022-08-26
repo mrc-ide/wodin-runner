@@ -43,9 +43,9 @@ export function wodinRun(Model: OdinModelConstructable, pars: UserType,
  * interpolated solutions available via an object containing:
  *
  * * `names`: the names of all traces returned by the model
- * * `pars`: The full model parameters, as a Map (i.e., suitable to
- *   pass back into an {@link OdinModelConstructable} object or {@link
- *   wodinRun})
+ * * `pars`: The full model parameters, as an object mapping strings
+ *   to {@link UserValue} (i.e., suitable to pass back into an {@link
+ *   OdinModelConstructable} object or {@link wodinRun})
  * * `solutionAll`: The solution of all series; an interpolating
  *   function as as would be returned by {@link wodinRun}
  * * `solutionFit`: The solution to a just the modelled series being
@@ -76,7 +76,7 @@ export function wodinFit(Model: OdinModelConstructable, data: FitData,
     const target = fitTarget(Model, data, pars, modelledSeries, controlODE);
     // TODO: require that we have starting points here (i.e., that
     // everything variable is in fact a number)
-    const start = pars.vary.map((nm: string) => pars.base.get(nm) as number);
+    const start = pars.vary.map((nm: string) => pars.base[nm] as number);
     return new Simplex(target, start, controlFit);
 }
 

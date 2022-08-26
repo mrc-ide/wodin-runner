@@ -49,8 +49,9 @@ export interface FitResult extends Result {
         endTime: number;
         /** The names of all traces returned by the model */
         names: string[];
-        /** The full model parameters, as a Map (i.e., suitable to
-         *   pass back into an {@link OdinModelConstructable} object or {@link
+        /** The full model parameters, as an object mapping strings to
+         *   {@link UserValue} (i.e., suitable to pass back into an
+         *   {@link OdinModelConstructable} object or {@link
          *   wodinRun})
          */
         pars: UserType;
@@ -96,9 +97,9 @@ export function fitTarget(Model: OdinModelConstructable,
 }
 
 export function updatePars(pars: FitPars, theta: number[]) {
-    const ret = new Map(pars.base);
+    const ret = { ...pars.base };
     for (let i = 0; i < pars.vary.length; ++i) {
-        ret.set(pars.vary[i], theta[i]);
+        ret[pars.vary[i]] = theta[i];
     }
     return ret;
 }

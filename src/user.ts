@@ -34,7 +34,7 @@ export type UserValue = number | number[] | UserTensor;
 /**
  * A key-value map of user-provided parameters
  */
-export type UserType = Map<string, UserValue>;
+export type UserType = { [k: string]: UserValue };
 
 /**
  * The data type corresponding to odin's internal data structures - a
@@ -63,7 +63,7 @@ export function checkUser(pars: UserType, allowed: string[],
         return;
     }
     const err = [];
-    for (const k of pars.keys()) {
+    for (const k of Object.keys(pars)) {
         if (!allowed.includes(k)) {
             err.push(k);
         }
@@ -109,7 +109,7 @@ export function setUserScalar(pars: UserType, name: string,
                               internal: InternalStorage,
                               defaultValue: number | null, min: number,
                               max: number, isInteger: boolean) {
-    const value = pars.get(name);
+    const value = pars[name];
     if (value === undefined) {
         if (internal[name] !== undefined) {
             return;
@@ -156,7 +156,7 @@ export function setUserArrayFixed(pars: UserType, name: string,
                                   min: number,
                                   max: number,
                                   isInteger: boolean) {
-    let value = pars.get(name);
+    let value = pars[name];
     if (value === undefined) {
         if (internal[name] !== undefined) {
             return;
@@ -213,7 +213,7 @@ export function setUserArrayVariable(pars: UserType, name: string,
                                      min: number,
                                      max: number,
                                      isInteger: boolean) {
-    let value = pars.get(name);
+    let value = pars[name];
     if (value === undefined) {
         if (internal[name] !== undefined) {
             return;

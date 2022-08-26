@@ -210,13 +210,13 @@ export function batchParsDisplace(base: UserType, name: string, count: number,
 }
 
 export function updatePars(base: UserType, name: string, value: number) {
-    const ret = new Map(base);
-    ret.set(name, value);
+    const ret = { ...base };
+    ret[name] = value;
     return ret;
 }
 
 function getParameterValueAsNumber(pars: UserType, name: string): number {
-    const value = pars.get(name);
+    const value = pars[name];
     if (value === undefined) {
         throw Error(`Expected a value for '${name}'`);
     }

@@ -1,7 +1,7 @@
 import {InternalStorage, UserTensor, UserValue, checkUser, setUserScalar, setUserArrayFixed, setUserArrayVariable} from "../src/user";
 
 describe("checkUser", () => {
-    const pars = new Map<string, UserValue>([["a", 1], ["b", 2], ["c", 3]]);
+    const pars = { a: 1, b: 2, c: 3 };
     it("does no checking if ignored", () => {
         checkUser(pars, [], "ignore");
     });
@@ -41,7 +41,7 @@ describe("checkUser", () => {
 });
 
 describe("setUserScalar", () => {
-    const pars = new Map<string, UserValue>([["a", 1], ["b", 2.5], ["c", 3]]);
+    const pars = { a: 1, b: 2.5, c: 3 };
     it("Can retrieve a user value", () => {
         const internal = {} as InternalStorage;
         setUserScalar(pars, "a", internal, null, -Infinity, Infinity, false);
@@ -74,7 +74,7 @@ describe("setUserScalar", () => {
     });
 
     it("Errors if given something other than a number", () => {
-        const pars = new Map<string, UserValue>([["a", [1, 2, 3]]]);
+        const pars = { a: [1, 2, 3] };
         const internal = {} as InternalStorage;
         expect(() => setUserScalar(
             pars, "a", internal, null, -Infinity, Infinity, false))
@@ -83,13 +83,13 @@ describe("setUserScalar", () => {
 });
 
 describe("setUserArrayFixed", () => {
-    const pars = new Map<string, UserValue>([
-        ["a", 1],
-        ["b", [1, 2, 3]],
-        ["c", {data: [1, 2, 3], dim: [3]}],
-        ["d", {data: [1, 2, 3, 4, 5, 6], dim: [2, 3]}],
-        ["e", {data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dim: [2, 3, 2]}]
-    ]);
+    const pars = {
+        a: 1,
+        b: [1, 2, 3],
+        c: {data: [1, 2, 3], dim: [3]},
+        d: {data: [1, 2, 3, 4, 5, 6], dim: [2, 3]},
+        e: {data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dim: [2, 3, 2]}
+    };
     it("Can retrieve a user array from a scalar", () => {
         const internal = {} as InternalStorage;
         setUserArrayFixed(pars, "a", internal, [1, 1],
@@ -162,9 +162,7 @@ describe("setUserArrayFixed", () => {
 
     it("Can prevent missing values", () => {
         const internal = {} as InternalStorage;
-        const pars = new Map<string, UserValue>([
-            ["x", {data: [1, 2, null as any], dim: [3]}]
-        ]);
+        const pars = { "x": {data: [1, 2, null as any], dim: [3]} };
         expect(() => setUserArrayFixed(
             pars, "x", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("'x' must not contain any NA values");
@@ -172,9 +170,9 @@ describe("setUserArrayFixed", () => {
 
     it("Errors if given non-numeric data", () => {
         const internal = {} as InternalStorage;
-        const pars = new Map<string, UserValue>([
-            ["x", {data: [1, 2, "three" as any], dim: [3]}]
-        ]);
+        const pars = {
+            "x": { data: [1, 2, "three" as any], dim: [3] }
+        };
         expect(() => setUserArrayFixed(
             pars, "x", internal, [3, 3], -Infinity, Infinity, false))
             .toThrow("Expected a number for 'x'");
@@ -189,13 +187,13 @@ describe("setUserArrayFixed", () => {
 });
 
 describe("setUserArrayVariable", () => {
-    const pars = new Map<string, UserValue>([
-        ["a", 1],
-        ["b", [1, 2, 3]],
-        ["c", {data: [1, 2, 3], dim: [3]}],
-        ["d", {data: [1, 2, 3, 4, 5, 6], dim: [2, 3]}],
-        ["e", {data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dim: [2, 3, 2]}]
-    ]);
+    const pars = {
+        a: 1,
+        b: [1, 2, 3],
+        c: {data: [1, 2, 3], dim: [3]},
+        d: {data: [1, 2, 3, 4, 5, 6], dim: [2, 3]},
+        e: {data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dim: [2, 3, 2]},
+    };
     it("Can fetch a variable and save sizes", () => {
         const size = [0, 0, 0];
         const internal = {} as InternalStorage;
