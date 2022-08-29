@@ -93,3 +93,9 @@ export function wodinFitBaseline(Model: OdinModelConstructable, data: FitData,
     const target = fitTarget(Model, data, parsFit, modelledSeries, controlODE);
     return target([]);
 }
+
+export function wodinRunDiscrete(Model: DustModelConstructable, pars: UserType,
+                                 stepStart: number, stepEnd: number,
+                                 nParticles: number) {
+    const result = runModelDiscrete(Model, pars, stepStart, stepEnd, nParticles);
+}

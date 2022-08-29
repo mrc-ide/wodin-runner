@@ -1,4 +1,11 @@
 import type { DopriControlParam } from "dopri";
+import {
+    Dust,
+    DustModelConstructable,
+    DustStateTime,
+    Pars as DustPars,
+// } from "@reside-ic/dust";
+} from "../node_modules/@reside-ic/dust/lib/index";
 
 import { base } from "./base";
 import type { OdinModel, OdinModelConstructable, Solution } from "./model";
@@ -7,7 +14,21 @@ import type { UserType } from "./user";
 
 /**
  * Wrapper class around an {@link OdinModel} designed to be driven
- * from the [R package odin](https://github.com/mrc-ide/odin)
+ * from the [R package odin](https://github.com/mrc-ide/odin).
+ *
+ * Unfortunately, there are some fairly ugly pain points here that
+ * make this hard:
+ *
+ * Our discrete interface matches much more closely the "dust" style
+ * runner than the "dde" style runner, with the idea that the user
+ * will interact with a stateful object that does not change shape.
+ *
+ * * Getting metadata out is hard
+ * * Getting names out is hard
+ * * Getting internal data out is hard to the point of being pointless
+ * * Hard to get initial conditions
+ * * Hard to get updates
+ * * No current interface to seedable random numbers
  */
 export class PkgWrapper {
     private model: OdinModel;
@@ -142,38 +163,54 @@ export class PkgWrapper {
 // particle mih be the easiest way of pulling thi all off ccorrectly.
 export class PkgWrapperDiscrete {
     private readonly dust: Dust;
+    private readonly Model: DustModelConstructable;
+    private pars: DustPars;
 
-    constructor(Model: DustModelConstructable, pars: UserType,
+    constructor(Model: DustModelConstructable, pars: DustPars,
                 unusedUserAction: string) {
         const nParticles = 1;
         const stepStart = 0;
         const random = undefined;
-        this.dust = new Dust(Model, pars, nParticles, step, random);
+        this.Model = Model;
+        this.pars = pars;
+        this.dust = new Dust(Model, pars, nParticles, stepStart, random);
     }
 
-    public initial(step: number) {
-        
-        // Can dust models really not do this?
+    public initial(step: number): number[] {
+        // Dust models can't do this nicely, and odin currently
+        // requires it (we will either relax this in dust or change
+        // the concepts in odin eventually)
+        const nParticles = 1;
+        const stepStart = 0;
+        const random = undefined;
+        const dust = new Dust(this.Model, this.pars, nParticles, step, random);
+        return dust.state(null).getParticle(0);
     }
 
-    public rhs(step: number, y: number[]) {
-        // Also this, seems surprising?
+    public rhs(step: number, y: number[]): number[] {
+        const nParticles = 1;
+        const random = undefined;
+        const dust = new Dust(this.Model, this.pars, nParticles, step, random);
+        dust.run(step + 1);
+        return dust.state(null).getParticle(0);
     }
 
-    public getMetadata() {
-        const info = this.dust.info();
+    public getMetadata(): void {
+        // const info = this.dust.info();
         // do some translation here into our general odin metadata format
+        throw Error("not supported for dust models");
     }
 
-    public getInternal() {
+    public getInternal(): void {
         // we'd need to access some private bits to be able to pull
         // this off - model from Dust, then within that the private
         // internal field.
+        throw Error("not supported for dust models");
     }
 
-    public setUser(pars: UserType, unusedUserAction: string) {
+    public setUser(pars: DustPars, unusedUserAction: string): void {
         // does this set internal state or not?
-        this.dust.setPars(pars);
+        this.dust.setPars(pars, true);
     }
 
     public run(step: number[], y0: number[] | null) {
@@ -181,13 +218,11 @@ export class PkgWrapperDiscrete {
         this.dust.setState(y0 ? [y0] : y0);
         const state = this.dust.simulate(step, null);
         // quick map here to build a matrix over time.
-        const y = [];
+        const y: number[] = [];
         // and a bit of faff to convert arrays into the correct format
         // for odin's names, annoyingly (especially as we have that
         // already).
-        const names = []; 
+        const names: string[] = []; 
         return { names, y };
-        }
     }
-               
 }
