@@ -6,6 +6,7 @@ import { FitData, FitPars, fitTarget } from "./fit";
 import type { OdinModelConstructable, Solution } from "./model";
 import { interpolatedSolution, runModel } from "./model";
 import type { UserType } from "./user";
+export { runModelDiscrete as wodinRunDiscrete } from "./discrete";
 
 /** The "run" method for wodin; this runs the model and returns a
  * closure that will provide data in a useful format to provide to

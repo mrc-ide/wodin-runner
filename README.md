@@ -6,6 +6,11 @@
 
 Support for running [odin](https://mrc-ide.github.io/odin) models from JavaScript - this is used by odin itself for running models via [V8](https://github.com/jeroen/v8) and by [wodin](https://github.com/mrc-ide/wodin), the web interface.
 
+We make a distinction between two basic types of models:
+
+* continuous time models (ODE and DDE) for which we are primarily interested in a single solution over time
+* discrete time (typically stochastic) models where we are interested in the behaviour of individual realisations, but also of summary statistics of these realisations such as the mean
+
 ## Licence
 
 MIT © Imperial College of Science, Technology and Medicine

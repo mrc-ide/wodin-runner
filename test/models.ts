@@ -395,3 +395,44 @@ export class InterpolateArray {
         return this.metadata;
     }
 }
+
+// @ts-nocheck
+export class Walk {
+    private readonly internal;
+
+    // Note how here we don't have the setUser method, that's handled
+    // by the container which is probably a better place for it
+    // really. We might port that idea back into the main odin runner
+    // for symmetry, which mostly just requires that the PkgWrapper
+    // class gets slightly more complex?
+    constructor(base, user, unusedUserAction) {
+        this.base = base;
+        this.internal = {};
+        this.base.pars.setParScalar(pars, "n", this.internal, 1);
+        this.base.pars.setParScalar(pars, "sd", this.internal, 1);
+    }
+
+    size() {
+        return this.internal.n;
+    }
+
+    info() {
+        const n = this.internal.n;
+        return [{dim: [n], length: n, name: "x"}];
+    }
+
+    update(step, y, yNext, random) {
+        var internal = this.internal;
+        const n = this.internal.n;
+        const sd = this.internal.sd;
+        for (let i = 0; i < n; ++i) {
+            yNext[i] = random.normal(y[i], sd);
+        }
+    }
+
+    initial(step) {
+        var internal = this.internal;
+        var state = Array(1).fill(0);
+        return state;
+    }
+}

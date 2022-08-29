@@ -124,3 +124,70 @@ export class PkgWrapper {
         };
     }
 }
+
+// one big question is how much we really want to try and support the
+// existing interface in odin as possible, given we don't really like
+// it and it's about time to try and move people onto dust?
+//
+//
+// There are several difficulties here - the order of initialisation
+// is different, which makes things a bit of a trick.
+//
+// We could add some support into dust to enable fetching the model
+// out from the first particle which would be all we need here in
+// order to access the initial() and rhs methods, though this then
+// makes everything else a bit uglier
+//
+// It does seem that getting access to the model for the first
+// particle mih be the easiest way of pulling thi all off ccorrectly.
+export class PkgWrapperDiscrete {
+    private readonly dust: Dust;
+
+    constructor(Model: DustModelConstructable, pars: UserType,
+                unusedUserAction: string) {
+        const nParticles = 1;
+        const stepStart = 0;
+        const random = undefined;
+        this.dust = new Dust(Model, pars, nParticles, step, random);
+    }
+
+    public initial(step: number) {
+        
+        // Can dust models really not do this?
+    }
+
+    public rhs(step: number, y: number[]) {
+        // Also this, seems surprising?
+    }
+
+    public getMetadata() {
+        const info = this.dust.info();
+        // do some translation here into our general odin metadata format
+    }
+
+    public getInternal() {
+        // we'd need to access some private bits to be able to pull
+        // this off - model from Dust, then within that the private
+        // internal field.
+    }
+
+    public setUser(pars: UserType, unusedUserAction: string) {
+        // does this set internal state or not?
+        this.dust.setPars(pars);
+    }
+
+    public run(step: number[], y0: number[] | null) {
+        this.dust.setStep(step[0]);
+        this.dust.setState(y0 ? [y0] : y0);
+        const state = this.dust.simulate(step, null);
+        // quick map here to build a matrix over time.
+        const y = [];
+        // and a bit of faff to convert arrays into the correct format
+        // for odin's names, annoyingly (especially as we have that
+        // already).
+        const names = []; 
+        return { names, y };
+        }
+    }
+               
+}

@@ -43,3 +43,13 @@ export function loop<T>(n: number, f: (i: number) => T): T[] {
     }
     return ret;
 }
+
+
+// note that this is inclusive, i.e. [a, b] not [a, b - 1]
+export function seq(a: number, b: number): number[] {
+    const ret = [];
+    for (let i = a; i <= b; ++i) {
+        ret.push(i);
+    }
+    return ret;
+}

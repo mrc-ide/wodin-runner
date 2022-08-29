@@ -1,5 +1,8 @@
 import * as dopri from "dopri";
 import type { DopriControlParam } from "dopri";
+import { DustStateTime,
+    // } from "@reside-ic/dust";
+} from "../node_modules/@reside-ic/dust/lib/index";
 
 import { base, BaseType } from "./base";
 import { interpolateCheckT } from "./interpolate";
@@ -86,7 +89,7 @@ export type InterpolatedSolution =
 export type OdinModelConstructable =
     new(base: BaseType, pars: UserType, unusedUserAction: string) => OdinModel;
 
-/** Common interface for all odin models */
+/** Common interface for all odin continuous time models */
 export interface OdinModelBase {
     /**  Set parameters into an existing model.
      *
