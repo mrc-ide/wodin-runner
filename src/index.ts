@@ -1,4 +1,4 @@
-export {wodinFit, wodinFitBaseline, wodinRun} from "./wodin";
+export {wodinFit, wodinFitValue, wodinRun} from "./wodin";
 export {PkgWrapper} from "./pkg";
 export {BaseType, base} from "./base";
 export {FitData, FitPars, FitResult} from "./fit";

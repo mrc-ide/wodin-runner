@@ -1,4 +1,4 @@
-import { wodinFit, wodinFitBaseline, wodinRun } from "../src/wodin";
+import { wodinFit, wodinFitValue, wodinRun } from "../src/wodin";
 import {UserTensor, UserValue} from "../src/user";
 import {grid} from "../src/util";
 
@@ -178,24 +178,17 @@ describe("can fit a simple line", () => {
     });
 });
 
-describe("can run a baseline", () => {
-    it("Can fit a simple model", () => {
+describe("can get sum of squares from model solution", () => {
+    it("returns correct number", () => {
         const time = [0, 1, 2, 3, 4, 5, 6];
         const data = {time, value: time.map((t: number) => 1 + t * 4)}
         const pars = { "a": 0.5 };
         const modelledSeries = "x";
         const controlODE = {};
-        const res = wodinFitBaseline(models.User, data, pars, modelledSeries,
-                                     controlODE);
-        // sum((1 + (1:6) * 0.5 - (1 + (1:6) * 4))^2)
-        expect(res.value).toBeCloseTo(1114.75);
-        expect(res.data.names).toEqual(["x"]);
-        expect(res.data.pars).toEqual(pars);
-        expect(res.data.endTime).toEqual(6);
 
-        const yFit = res.data.solution({ mode: "grid", tStart: 0, tEnd: 6, nPoints: 7 });
-        expect(yFit.names).toEqual(["x"]);
-        expect(yFit.x).toEqual(time);
-        expect(yFit.y[0]).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4]);
+        const solution = wodinRun(models.User, pars, 0, 10, controlODE);
+        const res = wodinFitValue(solution, data, modelledSeries);
+        // sum((1 + (1:6) * 0.5 - (1 + (1:6) * 4))^2)
+        expect(res).toBeCloseTo(1114.75);
     });
 });
