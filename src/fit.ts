@@ -1,12 +1,10 @@
 import type { Result } from "dfoptim";
 
 import { base } from "./base";
-import type { OdinModelConstructable, Solution } from "./model";
-import {
-    interpolatedSolution,
-    InterpolatedSolution,
-    runModel,
-} from "./model";
+import type { FullSolution, OdinModelConstructable, Solution } from "./model";
+import { runModel } from "./model";
+import { interpolatedSolution } from "./solution";
+import type { InterpolatedSolution, SeriesSet } from "./solution";
 import type {UserType} from "./user";
 
 /** Interface for data to fit an odin model to; every data set has two

@@ -4,7 +4,8 @@ import type { DopriControlParam } from "dopri";
 import { base } from "./base";
 import { FitData, FitPars, fitTarget } from "./fit";
 import type { OdinModelConstructable, Solution } from "./model";
-import { interpolatedSolution, runModel } from "./model";
+import { runModel } from "./model";
+import { interpolatedSolution } from "./solution";
 import type { UserType } from "./user";
 
 /** The "run" method for wodin; this runs the model and returns a
