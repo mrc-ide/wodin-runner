@@ -57,7 +57,7 @@ export class Batch {
      */
     public valueAtTime(time: number): SeriesSet {
         const result = this.solutions.map(
-            (s: InterpolatedSolution) => s(time, time, 1));
+            (s: InterpolatedSolution) => s({ mode: "given", times: [time] }));
         const names = result[0].names;
         const x = this.pars.values;
         const y = result[0].names.map((_: any, idxSeries: number) =>
@@ -86,8 +86,13 @@ export class Batch {
             // dfoptim, then some additional work in findExtremes
             // (which will need to accept the solution object too).
             const n = 501;
-            const result = this.solutions.map(
-                (s: InterpolatedSolution) => s(this.tStart, this.tEnd, n));
+            const times = {
+                mode: "grid",
+                nPoints: n,
+                tEnd: this.tEnd,
+                tStart: this.tStart,
+            } as const;
+            const result = this.solutions.map((s: InterpolatedSolution) => s(times));
             const names = result[0].names;
             const x = this.pars.values;
 

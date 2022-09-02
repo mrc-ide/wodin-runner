@@ -18,7 +18,7 @@ describe("can run basic models", () => {
         const control : any = {};
         const solution = wodinRun(models.Minimal, user, 0, 10, control);
 
-        const y = solution(0, 10, 11);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
         expect(y.names).toEqual(["x"]);
@@ -32,7 +32,7 @@ describe("can run basic models", () => {
         const control : any = {};
         const solution = wodinRun(models.Output, user, 0, 10, control);
 
-        const y = solution(0, 10, 11);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = expectedX.map((x: number) => x * 2);
@@ -47,7 +47,7 @@ describe("can run basic models", () => {
         const user = {};
         const control : any = {};
         const solution = wodinRun(models.Delay, user, 0, 10, control);
-        const y = solution(0, 10, 11);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
 
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
@@ -63,7 +63,7 @@ describe("can run basic models", () => {
         const user = {};
         const control : any = {};
         const solution = wodinRun(models.DelayNoOutput, user, 0, 10, control);
-        const y = solution(0, 10, 11);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
 
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
@@ -85,7 +85,7 @@ describe("can run basic models", () => {
 
         const expectedT = grid(0, pi, 11);
         const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
-        const y = solution(0, pi, 11);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: pi, nPoints: 11 });
         expect(approxEqualArray(y.y[0], expectedY, 1e-4)).toBe(true);
     });
 
@@ -95,7 +95,7 @@ describe("can run basic models", () => {
         const user = { tp, zp };
         const control: any = {};
         const solution = wodinRun(models.InterpolateArray, user, 0, 3, control);
-        const y = solution(0, 3, 51);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: 3, nPoints: 51 });
         const t = y.x;
         const z1 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 1 : t - 1));
         const z2 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 2 : 2 * (t - 1)));
@@ -111,8 +111,8 @@ describe("can set user", () => {
         const control : any = {};
         const solution1 = wodinRun(models.Minimal, pars1, 0, 10, control);
         const solution2 = wodinRun(models.User, pars2, 0, 10, control);
-        const y1 = solution1(0, 10, 11);
-        const y2 = solution2(0, 10, 11);
+        const y1 = solution1({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
+        const y2 = solution2({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
         expect(y1).toEqual(y2);
     });
 
@@ -122,8 +122,8 @@ describe("can set user", () => {
         const control : any = {};
         const solution1 = wodinRun(models.User, pars1, 0, 10, control);
         const solution2 = wodinRun(models.User, pars2, 0, 10, control);
-        const y1 = solution1(0, 10, 11);
-        const y2 = solution2(0, 10, 11);
+        const y1 = solution1({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
+        const y2 = solution2({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
         expect(y1).toEqual(y2);
     });
 
@@ -131,7 +131,7 @@ describe("can set user", () => {
         const pars = { "a": 2 };
         const control : any = {};
         const solution = wodinRun(models.User, pars, 0, 10, control);
-        const y = solution(0, 10, 11);
+        const y = solution({ mode: "grid", tStart: 0, tEnd: 10, nPoints: 11 });
         const expectedX = grid(0, 10, 11);
         const expectedY = expectedX.map((t: number) => t * 2 + 1);
         expect(y.names).toEqual(["x"]);
@@ -159,7 +159,7 @@ describe("can fit a simple line", () => {
         expect(res.data.pars["a"]).toEqual(res.location[0]);
         expect(res.data.endTime).toEqual(6);
 
-        const yFit = res.data.solution(0, 6, 7);
+        const yFit = res.data.solution({ mode: "grid", tStart: 0, tEnd: 6, nPoints: 7 });
         expect(yFit.names).toEqual(["x"]);
         expect(yFit.x).toEqual(time);
         expect(approxEqualArray(yFit.y[0], data.value)).toBe(true);
@@ -193,7 +193,7 @@ describe("can run a baseline", () => {
         expect(res.data.pars).toEqual(pars);
         expect(res.data.endTime).toEqual(6);
 
-        const yFit = res.data.solution(0, 6, 7);
+        const yFit = res.data.solution({ mode: "grid", tStart: 0, tEnd: 6, nPoints: 7 });
         expect(yFit.names).toEqual(["x"]);
         expect(yFit.x).toEqual(time);
         expect(yFit.y[0]).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4]);

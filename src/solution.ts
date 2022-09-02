@@ -38,21 +38,66 @@ export interface SeriesSet {
 }
 
 /**
+ * Evenly spaced time between `tStart` and `tEnd`
+ */
+export interface TimeGrid {
+    /** Literal field, indicates this represents a grid of times */
+    mode: "grid";
+    /** Start time to return the solution (cannot be less than the
+     *  originally used `tStart` - we will increase it to the original
+     *  `tStart` in that case)
+     */
+    tStart: number;
+    /** End time to return the solution (cannot be more than the
+     *  originally used `tEnd` - we will reduce it to the original
+     *  `tEnd` in that case)
+     */
+    tEnd: number;
+    /** Number of points to return - must be at least
+     * one, and points will be evenly spaced between `tStart` and `tEnd`
+     */
+    nPoints: number;
+}
+
+/**
+ * A set of times corresponding to some given list of times (e.g.,
+ * along a data set).
+ */
+export interface TimeGiven {
+    /** Literal field, indicates this represents a given array of times */
+    mode: "given";
+    /** A vector of times to return the solution at */
+    times: number[];
+}
+
+/**
+ * A union type representing times that a solution should be computed
+ * at, passed to {@link InterpolatedSolution}
+ */
+export type Times = TimeGrid | TimeGiven;
+
+function interpolationTimes(times: Times, tStart: number,
+                            tEnd: number): number[] {
+    switch (times.mode) {
+        case "grid":
+            return grid(Math.max(tStart, times.tStart),
+                        Math.min(tEnd, times.tEnd),
+                        times.nPoints);
+        case "given":
+            // We could check here that the solution spans the
+            // requested times but that probably causes more issues
+            // than it's worth?
+            return times.times;
+    }
+}
+
+/**
  * An interpolated solution to a system of differential equations,
  * typically created via {@link wodinRun}
  *
- * @param t0 Start time to return the solution (cannot be less than
- * the originally used `tStart` - we will increase it to `tStart` in
- * that case)
- *
- * @param t1 End time to return the solution (cannot be more than the
- * originally used `tEnd` - we will reduce it to `tEnd` in that case)
- *
- * @param nPoints Number of points to return - must be at least
- * one, and points will be evenly spaced between `t0` and `t1`
+ * @param times An object representing the times to return the solution at.
  */
-export type InterpolatedSolution =
-    (t0: number, t1: number, nPoints: number) => SeriesSet;
+export type InterpolatedSolution = (times: Times) => SeriesSet;
 
 /**
  * Conversion function for Dopri output into plotly input, allowing
@@ -70,8 +115,8 @@ export function interpolatedSolution(solution: FullSolution,
                                      names: string[],
                                      tStart: number,
                                      tEnd: number): InterpolatedSolution {
-    return (t0: number, t1: number, nPoints: number): SeriesSet => {
-        const t = grid(Math.max(tStart, t0), Math.min(tEnd, t1), nPoints);
+    return (times: Times): SeriesSet => {
+        const t = interpolationTimes(times, tStart, tEnd);
         const values = solution(t);
         // this is basically a transpose, pulling out every series in
         // turn
