@@ -59,6 +59,8 @@ export interface FitResult extends Result {
          *   function as as would be returned by {@link wodinRun}
          */
         solution: InterpolatedSolution;
+        /** The start time of the integration */
+        startTime: number;
     };
     /** The sum of squares for this set of parameters */
     value: number;
@@ -85,6 +87,7 @@ export function fitTarget(Model: OdinModelConstructable,
         return {
             /** Additional data alongside the goodness of fit, see above */
             data: {
+                startTime: tStart,
                 endTime: tEnd,
                 names,
                 pars: p,
