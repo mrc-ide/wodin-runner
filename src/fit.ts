@@ -68,7 +68,10 @@ export function fitTarget(Model: OdinModelConstructable,
                           data: FitData, pars: FitPars,
                           modelledSeries: string,
                           control: any) {
-    const tStart = data.time[0];
+    const tStart = 0;
+    if (data.time[0] < tStart) {
+        throw Error(`Expected the first time to be at least ${tStart}`);
+    }
     const tEnd = data.time[data.time.length - 1];
     return (theta: number[]): FitResult => {
         const p = updatePars(pars, theta);
