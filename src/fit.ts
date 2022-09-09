@@ -87,12 +87,12 @@ export function fitTarget(Model: OdinModelConstructable,
         return {
             /** Additional data alongside the goodness of fit, see above */
             data: {
-                startTime: tStart,
                 endTime: tEnd,
                 names,
                 pars: p,
                 solution: interpolatedSolution(
                     solution, names, tStart, tEnd),
+                startTime: tStart,
             },
             /** Goodness of fit, the sum-of-squared differences
              * between the observed data and the modelled series
