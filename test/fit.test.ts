@@ -41,7 +41,7 @@ describe("fitTarget", () => {
         const control = {};
         const target = fitTarget(models.User, data, pars, modelledSeries, control);
         const res = target([0.5]);
-        const sol = res.data.solution(0, 5, 6);
+        const sol = res.data.solution({ mode: "grid", tStart: 0, tEnd: 5, nPoints: 6 });
         const expectedX = grid(0, 5, 6);
         const expectedY = expectedX.map((el) => 1 + el * 0.5);
         expect(sol.x).toStrictEqual(expectedX);
