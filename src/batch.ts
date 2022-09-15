@@ -1,8 +1,7 @@
 import type { DopriControlParam } from "dopri";
 
 import type { OdinModelConstructable } from "./model";
-import type { InterpolatedSolution, SeriesSet } from "./solution";
-
+import { InterpolatedSolution, SeriesSet, TimeMode } from "./solution";
 import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
@@ -57,7 +56,7 @@ export class Batch {
      */
     public valueAtTime(time: number): SeriesSet {
         const result = this.solutions.map(
-            (s: InterpolatedSolution) => s({ mode: "given", times: [time] }));
+            (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
         const names = result[0].names;
         const x = this.pars.values;
         const y = result[0].names.map((_: any, idxSeries: number) =>
@@ -87,7 +86,7 @@ export class Batch {
             // (which will need to accept the solution object too).
             const n = 501;
             const times = {
-                mode: "grid",
+                mode: TimeMode.Grid,
                 nPoints: n,
                 tEnd: this.tEnd,
                 tStart: this.tStart,

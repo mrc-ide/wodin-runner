@@ -5,7 +5,7 @@ import { base } from "./base";
 import { FitData, FitPars, fitTarget, sumOfSquares } from "./fit";
 import type { OdinModelConstructable, Solution } from "./model";
 import { runModel } from "./model";
-import { interpolatedSolution, InterpolatedSolution } from "./solution";
+import { interpolatedSolution, InterpolatedSolution, TimeMode } from "./solution";
 import type { UserType } from "./user";
 
 /** The "run" method for wodin; this runs the model and returns a
@@ -94,7 +94,7 @@ export function wodinFit(Model: OdinModelConstructable, data: FitData,
  */
 export function wodinFitValue(solution: InterpolatedSolution, data: FitData,
                               modelledSeries: string): number {
-    const { names, y } = solution({ mode: "given", times: data.time });
+    const { names, y } = solution({ mode: TimeMode.Given, times: data.time });
     const idxModel = names.indexOf(modelledSeries);
     return sumOfSquares(data.value, y[idxModel]);
 }

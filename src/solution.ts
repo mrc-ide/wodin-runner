@@ -37,12 +37,17 @@ export interface SeriesSet {
     y: number[][];
 }
 
+export enum TimeMode {
+    Grid = "grid",
+    Given = "given",
+}
+
 /**
  * Evenly spaced time between `tStart` and `tEnd`
  */
 export interface TimeGrid {
     /** Literal field, indicates this represents a grid of times */
-    mode: "grid";
+    mode: TimeMode.Grid;
     /** Start time to return the solution (cannot be less than the
      *  originally used `tStart` - we will increase it to the original
      *  `tStart` in that case)
@@ -65,7 +70,7 @@ export interface TimeGrid {
  */
 export interface TimeGiven {
     /** Literal field, indicates this represents a given array of times */
-    mode: "given";
+    mode: TimeMode.Given;
     /** A vector of times to return the solution at */
     times: number[];
 }
@@ -79,11 +84,11 @@ export type Times = TimeGrid | TimeGiven;
 function interpolationTimes(times: Times, tStart: number,
                             tEnd: number): number[] {
     switch (times.mode) {
-        case "grid":
+        case TimeMode.Grid:
             return grid(Math.max(tStart, times.tStart),
                         Math.min(tEnd, times.tEnd),
                         times.nPoints);
-        case "given":
+        case TimeMode.Given:
             // We could check here that the solution spans the
             // requested times but that probably causes more issues
             // than it's worth?
