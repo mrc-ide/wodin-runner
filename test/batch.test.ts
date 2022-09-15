@@ -1,4 +1,5 @@
 import { batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
+import { TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
@@ -84,13 +85,14 @@ describe("run sensitivity", () => {
         const central = wodinRun(User, user, tStart, tEnd, control);
         const lower = wodinRun(User, { a: 0 }, tStart, tEnd, control);
         const upper = wodinRun(User, { a: 4 }, tStart, tEnd, control);
-        const n = 11;
-        expect(res.solutions[2](tStart, tEnd, n))
-            .toEqual(central(tStart, tEnd, n));
-        expect(res.solutions[0](tStart, tEnd, n))
-            .toEqual(lower(tStart, tEnd, n));
-        expect(res.solutions[4](tStart, tEnd, n))
-            .toEqual(upper(tStart, tEnd, n));
+        const nPoints = 11;
+        const times = { mode: TimeMode.Grid, tStart, tEnd, nPoints } as const;
+        expect(res.solutions[2](times))
+            .toEqual(central(times));
+        expect(res.solutions[0](times))
+            .toEqual(lower(times));
+        expect(res.solutions[4](times))
+            .toEqual(upper(times));
     });
 });
 

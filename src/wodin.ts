@@ -2,9 +2,10 @@ import { Simplex, SimplexControlParam } from "dfoptim";
 import type { DopriControlParam } from "dopri";
 
 import { base } from "./base";
-import { FitData, FitPars, fitTarget } from "./fit";
+import { FitData, FitPars, fitTarget, sumOfSquares } from "./fit";
 import type { OdinModelConstructable, Solution } from "./model";
-import { interpolatedSolution, runModel } from "./model";
+import { runModel } from "./model";
+import { interpolatedSolution, InterpolatedSolution, TimeMode } from "./solution";
 import type { UserType } from "./user";
 
 /** The "run" method for wodin; this runs the model and returns a
@@ -81,14 +82,19 @@ export function wodinFit(Model: OdinModelConstructable, data: FitData,
 }
 
 /**
- * Create a baseline for a fit, before the parameters to be varied in
- * the fit are known. This runs an integration with the base
- * parameters and returns everything that {@link wodinFit} would.
+ * Compute the goodness of fit (currently always sum of squares) for a
+ * solution. This can be used to quickly get the same goodness of fit
+ * measure as `wodinFit` but before the parameters to vary are known
+ *
+ * @param solution Solution, created by running {@link wodinRun}
+ *
+ * @param data Data being fit to
+ *
+ * @param modelledSeries Name of the modelled series being fit to
  */
-export function wodinFitBaseline(Model: OdinModelConstructable, data: FitData,
-                                 pars: UserType, modelledSeries: string,
-                                 controlODE: Partial<DopriControlParam>) {
-    const parsFit = { base: pars, vary: [] };
-    const target = fitTarget(Model, data, parsFit, modelledSeries, controlODE);
-    return target([]);
+export function wodinFitValue(solution: InterpolatedSolution, data: FitData,
+                              modelledSeries: string): number {
+    const { names, y } = solution({ mode: TimeMode.Given, times: data.time });
+    const idxModel = names.indexOf(modelledSeries);
+    return sumOfSquares(data.value, y[idxModel]);
 }
