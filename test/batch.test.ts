@@ -4,7 +4,7 @@ import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
 import { approxEqualArray } from "./helpers";
-import { Output, User } from "./models";
+import { Oscillate, Output, User } from "./models";
 
 describe("Can generate sensible sets of parameters", () => {
     it("Generates a simple sequence", () => {
@@ -93,6 +93,27 @@ describe("run sensitivity", () => {
             .toEqual(lower(times));
         expect(res.solutions[4](times))
             .toEqual(upper(times));
+    });
+
+    it("catches errors in fraction of runs", () => {
+        const pars = {
+            base: { scale: 1 },
+            name: "scale",
+            values: [0.01, 0.1, 1, 10, 100],
+        };
+        const control = {maxSteps: 100};
+        const res = batchRun(Oscillate, pars, 0, 10, control);
+        // This will be 2 unless we change the behaviour of dopri
+        expect(res.errors.length).toEqual(2);
+        expect(res.errors[0].value).toEqual(10);
+        expect(res.errors[1].value).toEqual(100);
+        expect(res.errors[0].error).toMatch("too many steps");
+
+        expect(res.solutions.length).toBe(3);
+        expect(res.pars.values).toEqual([0.01, 0.1, 1]);
+
+        // Summaries also work over the reduced set of solutions
+        expect(res.valueAtTime(10).x.length).toEqual(3);
     });
 });
 

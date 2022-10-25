@@ -19,6 +19,9 @@ export class Batch {
     /** An array of solutions */
     public readonly solutions: InterpolatedSolution[];
 
+    /** An array of errors */
+    public readonly errors: BatchError[];
+
     private _extremes?: Extremes<SeriesSet>;
 
     /** Construct a batch run, which will run the model many times
@@ -41,10 +44,32 @@ export class Batch {
         this.pars = pars;
         this.tStart = tStart;
         this.tEnd = tEnd;
-        this.solutions = pars.values.map((v: number) => {
+
+        const solutions = [] as InterpolatedSolution[];
+        const errors = [] as BatchError[];
+        const values = [] as number[];
+
+        pars.values.forEach((v: number) => {
             const p = updatePars(pars.base, pars.name, v);
-            return wodinRun(Model, p, tStart, tEnd, control);
+            try {
+                solutions.push(wodinRun(Model, p, tStart, tEnd, control));
+                values.push(v);
+            } catch (e: any) {
+                errors.push({value: v, error: (e as Error).message});
+            }
         });
+
+        // We need to think about this error, though it should not
+        // come out that often...
+        if (solutions.length === 0) {
+            throw Error("All solutions failed");
+        }
+
+        // We actually only use the value here, so could just save
+        // that, and not the rest, really.
+        this.pars = {...pars, values};
+        this.solutions = solutions;
+        this.errors = errors;
     }
 
     /**
@@ -122,6 +147,13 @@ export interface BatchPars {
     name: string;
     /** The values that `name` will take, replacing the value in `base` */
     values: number[];
+}
+
+export interface BatchError {
+    /** The failed parameter value */
+    value: number;
+    /** The error */
+    error: string;
 }
 
 /**
