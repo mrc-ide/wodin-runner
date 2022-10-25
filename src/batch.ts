@@ -62,7 +62,7 @@ export class Batch {
         // We need to think about this error, though it should not
         // come out that often...
         if (solutions.length === 0) {
-            throw Error("All solutions failed");
+            throw Error(`All solutions failed; first error: ${errors[0].error}`);
         }
 
         // We actually only use the value here, so could just save

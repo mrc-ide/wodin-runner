@@ -115,6 +115,22 @@ describe("run sensitivity", () => {
         // Summaries also work over the reduced set of solutions
         expect(res.valueAtTime(10).x.length).toEqual(3);
     });
+
+    // This is very unlikely to happen in practice because we require
+    // that the central solution is within the range. It might happen
+    // around a point where we're on the edge of failing though and it
+    // depends critically on the tolerances and number of steps.
+    it("throws if all runs fail", () => {
+        const pars = {
+            base: { scale: 1 },
+            name: "scale",
+            values: [0.01, 0.1, 1, 10, 100],
+        };
+        const control = {maxSteps: 1};
+        // Not the world's most lovely error, but hopefully rare in practice.
+        expect(() => batchRun(Oscillate, pars, 0, 10, control))
+            .toThrow("All solutions failed; first error: Integration failure: too many steps");
+    });
 });
 
 describe("can extract from a batch result", () => {
