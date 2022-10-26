@@ -102,7 +102,7 @@ function interpolationTimes(times: Times, tStart: number,
  *
  * @param times An object representing the times to return the solution at.
  */
-export type InterpolatedSolution = (times: Times) => SeriesSet;
+export type InterpolatedSolution = (times: Times) => SeriesSet2;
 
 /**
  * Conversion function for Dopri output into plotly input, allowing
@@ -122,11 +122,12 @@ export function interpolatedSolution(solution: FullSolution,
                                      tEnd: number): InterpolatedSolution {
     return (times: Times): SeriesSet => {
         const t = interpolationTimes(times, tStart, tEnd);
-        const values = solution(t);
-        // this is basically a transpose, pulling out every series in
-        // turn
-        const y = values[0].map(
-            (_: any, i: number) => values.map((row: number[]) => row[i]));
-        return { names, x: t, y };
+        const result = solution(t);
+        const values = names.map(
+            (_: any, i: number) => ({
+                name: name[i],
+                y: result.map((row: number[]) => row[i])
+            }));
+        return { values, x: t };
     };
 }
