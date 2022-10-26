@@ -4,8 +4,8 @@ import { base } from "./base";
 import type { FullSolution, OdinModelConstructable, Solution } from "./model";
 import { runModel } from "./model";
 import { interpolatedSolution } from "./solution";
-import type { InterpolatedSolution, SeriesSet } from "./solution";
-import type {UserType} from "./user";
+import type { InterpolatedSolution } from "./solution";
+import type { UserType } from "./user";
 
 /** Interface for data to fit an odin model to; every data set has two
  *  series, even if they are derived from some larger data set.

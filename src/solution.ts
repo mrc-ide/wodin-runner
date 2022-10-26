@@ -2,39 +2,25 @@ import { FullSolution } from "./model";
 import { grid } from "./util";
 
 /**
- * We return a set of series from a few different places:
+ * We return a set of series from two different places:
  *
  * * {@link wodinRun} returns the full set of series
- * * {@link wodinFit} returns a single series with just the fit data
  * * {@link batchRun} returns a number of full sets of series
- *
- * Later, when we get going with the stochastic interface, we'll need
- * a slightly more flexible interface perhaps because we'll have a
- * number of trajectories at once, and along with them summary
- * statistics such as the mean or median.
- *
- * Using some key-value mapping will likely end up being a bit
- * limiting eventually, because we have no easy place to store the
- * metadata that we'll want (these 5 traces all correspond to variable
- * 'x' with some parameter for example). So here, we'll use something
- * deliberately simple but easy to extend. It does not try to closely
- * match the plotly interface (wodin will take care of that instead).
- *
- * Later, we might want to swap the modelling of `y` for something
- * slightly more flexible (either using a multidimensional array or
- * allowing `y` to contain something more exotic per series).
  */
 export interface SeriesSet {
-    /** Names of elements in the series */
-    names: string[];
     /** The domain that the series is available at, typically time  */
     x: number[];
-    /**
-     * The values of traces; will have length `names.length` and each
-     * element will have length `x.length`, so that `y[i][j]` is the
-     * `j`th time point of the `i`th series
+    /** An array of individual traces, each of which are defined over
+     * the same set of `x` values.
      */
-    y: number[][];
+    values: SeriesSetValues[];
+}
+
+export interface SeriesSetValues {
+    /** The name of the series */
+    name: string;
+    /** The value of the traces, over the time domain */
+    y: number[];
 }
 
 export enum TimeMode {
@@ -102,7 +88,7 @@ function interpolationTimes(times: Times, tStart: number,
  *
  * @param times An object representing the times to return the solution at.
  */
-export type InterpolatedSolution = (times: Times) => SeriesSet2;
+export type InterpolatedSolution = (times: Times) => SeriesSet;
 
 /**
  * Conversion function for Dopri output into plotly input, allowing
