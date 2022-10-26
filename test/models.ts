@@ -395,3 +395,42 @@ export class InterpolateArray {
         return this.metadata;
     }
 }
+
+// @ts-nocheck
+export class Oscillate {
+    // A simple example with a system we can control the amount of
+    // work it does
+    constructor(base, user, unusedUserAction) {
+        this.base = base;
+        this.internal = {};
+        this.setUser(user, unusedUserAction);
+    }
+
+    rhs(t, state, dstatedt) {
+        var internal = this.internal;
+        dstatedt[0] = Math.sin(t * internal.scale);
+    }
+
+    initial(t) {
+        return [1];
+    }
+
+    names() {
+        return ["y"];
+    }
+
+    setUser(user, unusedUserAction) {
+        const internal = this.internal;
+        this.base.user.checkUser(user, ["scale"], unusedUserAction);
+        this.base.user.setUserScalar(user, "scale", internal, 1,
+                                     -Infinity, Infinity, false);
+    }
+
+    getInternal() {
+        return this.internal;
+    }
+
+    getMetadata() {
+        return {};
+    }
+}
