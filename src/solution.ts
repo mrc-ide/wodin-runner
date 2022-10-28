@@ -111,8 +111,8 @@ export function interpolatedSolution(solution: FullSolution,
         const result = solution(t);
         const values = names.map(
             (_: any, i: number) => ({
-                name: name[i],
-                y: result.map((row: number[]) => row[i])
+                name: names[i],
+                y: result.map((row: number[]) => row[i]),
             }));
         return { values, x: t };
     };

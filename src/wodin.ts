@@ -94,7 +94,7 @@ export function wodinFit(Model: OdinModelConstructable, data: FitData,
  */
 export function wodinFitValue(solution: InterpolatedSolution, data: FitData,
                               modelledSeries: string): number {
-    const { names, y } = solution({ mode: TimeMode.Given, times: data.time });
-    const idxModel = names.indexOf(modelledSeries);
-    return sumOfSquares(data.value, y[idxModel]);
+    const sol = solution({ mode: TimeMode.Given, times: data.time });
+    const idxModel = sol.values.findIndex((el) => el.name === modelledSeries);
+    return sumOfSquares(data.value, sol.values[idxModel].y);
 }
