@@ -46,6 +46,8 @@ describe("fitTarget", () => {
         const expectedX = grid(0, 5, 6);
         const expectedY = expectedX.map((el) => 1 + el * 0.5);
         expect(sol.x).toStrictEqual(expectedX);
-        expect(approxEqualArray(sol.y[0], expectedY)).toBe(true);
+        expect(sol.values.length).toBe(1);
+        expect(sol.values[0].name).toBe("x");
+        expect(approxEqualArray(sol.values[0].y, expectedY)).toBe(true);
     });
 });
