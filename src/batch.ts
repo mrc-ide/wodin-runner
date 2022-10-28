@@ -82,11 +82,13 @@ export class Batch {
     public valueAtTime(time: number): SeriesSet {
         const result = this.solutions.map(
             (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
-        const names = result[0].names;
         const x = this.pars.values;
-        const y = result[0].names.map((_: any, idxSeries: number) =>
-                                      result.map((r: SeriesSet) => r.y[idxSeries][0]));
-        return {names, x, y};
+        const extractSeries = (idx: number) => ({
+            name: result[0].values[idx].name,
+            y: result.map((r) => r.values[idx].y[0])
+        });
+        const values = result[0].values.map((_: any, idx: number) => extractSeries(idx));
+        return { values, x };
     }
 
     /**
