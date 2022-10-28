@@ -85,7 +85,7 @@ export class Batch {
         const x = this.pars.values;
         const extractSeries = (idx: number) => ({
             name: result[0].values[idx].name,
-            y: result.map((r) => r.values[idx].y[0])
+            y: result.map((r) => r.values[idx].y[0]),
         });
         const values = result[0].values.map((_: any, idx: number) => extractSeries(idx));
         return { values, x };
