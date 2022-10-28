@@ -8,7 +8,7 @@ import {
 /**
  * Information about interpolation bounds
  */
-interface InterpolateTimes {
+export interface InterpolateTimes {
     /** The minimum time supported by the interpolation functions */
     max: number;
     /** The maximum time supported by the interpolation functions */

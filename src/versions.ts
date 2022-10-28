@@ -3,6 +3,6 @@ export function versions() {
     return {
         dfoptim: "0.0.5",
         dopri: "0.0.12",
-        odinjs: "0.0.17",
+        odinjs: "0.0.18",
     };
 }
