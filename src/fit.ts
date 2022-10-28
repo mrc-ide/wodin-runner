@@ -38,8 +38,7 @@ export interface FitPars {
 
 /**
  * Result of fitting a model, returned by the `result` method on
- * `Simplex` after initialisation with {@link wodinFit}. Also returned
- * by {@link wodinFitBaseline}.
+ * `Simplex` after initialisation with {@link wodinFit}.
  */
 export interface FitResult extends Result {
     data: {
