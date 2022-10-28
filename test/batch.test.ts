@@ -167,9 +167,12 @@ describe("can extract from a batch result", () => {
         expect(res.values[1].name).toBe("y");
         expect(approxEqualArray(res.values[1].y, [2, 22, 42, 62, 82]))
             .toBe(true);
-        // const e = obj.extreme("yMax");
-        // expect(e.names).toEqual(["x", "y"]);
-        // expect(e.x).toEqual(res.x);
-        // expect(approxEqualArray(e.y[0], [1, 11, 21, 31, 41])).toBe(true);
+        const e = obj.extreme("yMax");
+        expect(e.x).toEqual(res.x);
+        expect(e.values.length).toBe(2);
+        expect(e.values[0].name).toBe("x");
+        expect(e.values[1].name).toBe("y");
+        expect(approxEqualArray(e.values[0].y, [1, 11, 21, 31, 41])).toBe(true);
+        expect(approxEqualArray(e.values[1].y, [2, 22, 42, 62, 82])).toBe(true);
     });
 });

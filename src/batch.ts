@@ -119,13 +119,11 @@ export class Batch {
                 tStart: this.tStart,
             } as const;
             const result = this.solutions.map((s: InterpolatedSolution) => s(times));
-            const names = result[0].names;
+            const t = result[0].x;
+            const names = result[0].values.map((s) => s.name);
+            const extremes = loop(names.length, (idx: number) =>
+                                  result.map((s) => findExtremes(t, s.values[idx].y)));
             const x = this.pars.values;
-
-            const extremes = loop(
-                names.length, (idxSeries: number) =>
-                    result.map((s: SeriesSet) => findExtremes(idxSeries, s)));
-
             this._extremes = {
                 tMax: extractExtremes("tMax", names, x, extremes),
                 tMin: extractExtremes("tMin", names, x, extremes),
@@ -279,9 +277,7 @@ export interface Extremes<T> {
 // Later, we might do some polishing of these, which should make it
 // both faster and more accurate, but we'll need to pass in the
 // correct interpolating function too.
-function findExtremes(idxSeries: number, s: SeriesSet): Extremes<number> {
-    const t = s.x;
-    const y = s.y[idxSeries];
+function findExtremes(t: number[], y: number[]): Extremes<number> {
     const idxMin = whichMin(y);
     const idxMax = whichMax(y);
     const tMin = t[idxMin];
@@ -295,6 +291,7 @@ function extractExtremes(name: keyof Extremes<number>,
                          names: string[],
                          x: number[],
                          extremes: Array<Array<Extremes<number>>>): SeriesSet {
-    const y = loop(names.length, (i: number) => extremes[i].map((el: Extremes<number>) => el[name]));
-    return { names, x, y };
+    const values = loop(names.length, (idx) =>
+                        ({name: names[idx], y: extremes[idx].map((el) => el[name])}));
+    return { x, values };
 }
