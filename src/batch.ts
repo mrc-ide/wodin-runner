@@ -1,13 +1,12 @@
 import type { DopriControlParam } from "dopri";
 
 import type { OdinModelConstructable } from "./model";
-import { SeriesSet, TimeMode, Times } from "./solution";
+import { InterpolatedSolution, SeriesSet, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
-export type BatchSolution = (times: Times) => SeriesSet;
-export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => BatchSolution;
+export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
 
 export class Batch {
     /** The parameters used for this batch run */
@@ -20,7 +19,7 @@ export class Batch {
     public readonly tEnd: number;
 
     /** An array of solutions */
-    public readonly solutions: BatchSolution[];
+    public readonly solutions: InterpolatedSolution[];
 
     /** An array of errors */
     public readonly errors: BatchError[];
@@ -46,8 +45,8 @@ export class Batch {
         this.tStart = tStart;
         this.tEnd = tEnd;
 
-        const solutions = [] as typeof this.solutions;
-        const errors = [] as typeof this.errors;
+        const solutions = [] as InterpolatedSolution[];
+        const errors = [] as BatchError[];
         const values = [] as number[];
 
         pars.values.forEach((v: number) => {
@@ -82,7 +81,7 @@ export class Batch {
      */
     public valueAtTime(time: number): SeriesSet {
         const result = this.solutions.map(
-            (s) => s({ mode: TimeMode.Given, times: [time] }));
+            (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
         const x = this.pars.values;
         const extractSeries = (idx: number) => ({
             name: result[0].values[idx].name,
@@ -119,7 +118,7 @@ export class Batch {
                 tEnd: this.tEnd,
                 tStart: this.tStart,
             } as const;
-            const result = this.solutions.map((s) => s(times));
+            const result = this.solutions.map((s: InterpolatedSolution) => s(times));
             const t = result[0].x;
             const names = result[0].values.map((s) => s.name);
             const extremes = loop(names.length, (idx: number) =>

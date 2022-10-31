@@ -24,7 +24,6 @@ export {
     Batch,
     BatchError,
     BatchPars,
-    BatchSolution,
     Extremes,
     batchParsDisplace,
     batchParsRange,
