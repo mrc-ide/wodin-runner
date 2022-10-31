@@ -144,9 +144,11 @@ describe("can extract from a batch result", () => {
         const tEnd = 10;
         const obj = batchRun(User, pars, tStart, tEnd, control);
         const res = obj.valueAtTime(tEnd);
-        expect(res.names).toEqual(["x"]);
         expect(res.x).toEqual(grid(0, 4, 5));
-        expect(approxEqualArray(res.y[0], [1, 11, 21, 31, 41])).toBe(true);
+        expect(res.values.length).toBe(1);
+        expect(res.values[0].name).toBe("x");
+        expect(approxEqualArray(res.values[0].y, [1, 11, 21, 31, 41]))
+            .toBe(true);
     });
 
     it("Extracts state at a particular time for multivariable models", () => {
@@ -157,13 +159,20 @@ describe("can extract from a batch result", () => {
         const tEnd = 10;
         const obj = batchRun(Output, pars, tStart, tEnd, control);
         const res = obj.valueAtTime(tEnd);
-        expect(res.names).toEqual(["x", "y"]);
         expect(res.x).toEqual(grid(0, 4, 5));
-        expect(approxEqualArray(res.y[0], [1, 11, 21, 31, 41])).toBe(true);
-        expect(approxEqualArray(res.y[1], [2, 22, 42, 62, 82])).toBe(true);
+        expect(res.values.length).toBe(2);
+        expect(res.values[0].name).toBe("x");
+        expect(approxEqualArray(res.values[0].y, [1, 11, 21, 31, 41]))
+            .toBe(true);
+        expect(res.values[1].name).toBe("y");
+        expect(approxEqualArray(res.values[1].y, [2, 22, 42, 62, 82]))
+            .toBe(true);
         const e = obj.extreme("yMax");
-        expect(e.names).toEqual(["x", "y"]);
         expect(e.x).toEqual(res.x);
-        expect(approxEqualArray(e.y[0], [1, 11, 21, 31, 41])).toBe(true);
+        expect(e.values.length).toBe(2);
+        expect(e.values[0].name).toBe("x");
+        expect(e.values[1].name).toBe("y");
+        expect(approxEqualArray(e.values[0].y, [1, 11, 21, 31, 41])).toBe(true);
+        expect(approxEqualArray(e.values[1].y, [2, 22, 42, 62, 82])).toBe(true);
     });
 });

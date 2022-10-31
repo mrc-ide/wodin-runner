@@ -22,10 +22,10 @@ describe("can run basic models", () => {
         const y = solution({ mode: TimeMode.Grid, tStart: 0, tEnd: 10, nPoints: 11 });
         const expectedT = grid(0, 10, 11);
         const expectedX = expectedT.map((t: number) => t + 1);
-        expect(y.names).toEqual(["x"]);
         expect(y.x).toEqual(expectedT);
-        expect(y.y.length).toBe(1);
-        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
+        expect(y.values.length).toBe(1);
+        expect(y.values[0].name).toBe("x");
+        expect(approxEqualArray(y.values[0].y, expectedX)).toBe(true);
     });
 
     it("runs model with output, with expected output", () => {
@@ -38,10 +38,13 @@ describe("can run basic models", () => {
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = expectedX.map((x: number) => x * 2);
 
-        expect(y.names).toEqual(["x", "y"]);
         expect(y.x).toEqual(expectedT);
-        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
-        expect(approxEqualArray(y.y[1], expectedY)).toBe(true);
+        expect(y.values.length).toBe(2);
+        expect(y.values[0].name).toBe("x");
+        expect(y.values[1].name).toBe("y");
+
+        expect(approxEqualArray(y.values[0].y, expectedX)).toBe(true);
+        expect(approxEqualArray(y.values[1].y, expectedY)).toBe(true);
     });
 
     it("runs delay model without error", () => {
@@ -54,10 +57,13 @@ describe("can run basic models", () => {
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = expectedT.map((t: number) => Math.max(1, t - 1));
 
-        expect(y.names).toEqual(["x", "y"]);
         expect(y.x).toEqual(expectedT);
-        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
-        expect(approxEqualArray(y.y[1], expectedY, 1e-3)).toBe(true);
+        expect(y.values.length).toBe(2);
+        expect(y.values[0].name).toBe("x");
+        expect(y.values[1].name).toBe("y");
+
+        expect(approxEqualArray(y.values[0].y, expectedX)).toBe(true);
+        expect(approxEqualArray(y.values[1].y, expectedY, 1e-3)).toBe(true);
     });
 
     it("runs delay model without output without error", () => {
@@ -70,10 +76,12 @@ describe("can run basic models", () => {
         const expectedX = expectedT.map((t: number) => t + 1);
         const expectedY = [1, 2, 3, 4.5, 7, 10.5, 15, 20.5, 27, 34.5, 43];
 
-        expect(y.names).toEqual(["x", "y"]);
         expect(y.x).toEqual(expectedT);
-        expect(approxEqualArray(y.y[0], expectedX)).toBe(true);
-        expect(approxEqualArray(y.y[1], expectedY, 1e-3)).toBe(true);
+        expect(y.values.length).toBe(2);
+        expect(y.values[0].name).toBe("x");
+        expect(y.values[1].name).toBe("y");
+        expect(approxEqualArray(y.values[0].y, expectedX)).toBe(true);
+        expect(approxEqualArray(y.values[1].y, expectedY, 1e-3)).toBe(true);
     });
 
     it("runs a model with interpolation", () => {
@@ -87,7 +95,7 @@ describe("can run basic models", () => {
         const expectedT = grid(0, pi, 11);
         const expectedY = expectedT.map((t: number) => 1 - Math.cos(t));
         const y = solution({ mode: TimeMode.Grid, tStart: 0, tEnd: pi, nPoints: 11 });
-        expect(approxEqualArray(y.y[0], expectedY, 1e-4)).toBe(true);
+        expect(approxEqualArray(y.values[0].y, expectedY, 1e-4)).toBe(true);
     });
 
     it("runs a model with interpolated arrays", () => {
@@ -100,8 +108,8 @@ describe("can run basic models", () => {
         const t = y.x;
         const z1 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 1 : t - 1));
         const z2 = t.map((t: number) => t < 1 ? 0 : (t > 2 ? 2 : 2 * (t - 1)));
-        expect(approxEqualArray(y.y[0], z1, 6e-5)).toBe(true);
-        expect(approxEqualArray(y.y[1], z2, 6e-5)).toBe(true);
+        expect(approxEqualArray(y.values[0].y, z1, 6e-5)).toBe(true);
+        expect(approxEqualArray(y.values[1].y, z2, 6e-5)).toBe(true);
     });
 });
 
@@ -135,9 +143,10 @@ describe("can set user", () => {
         const y = solution({ mode: TimeMode.Grid, tStart: 0, tEnd: 10, nPoints: 11 });
         const expectedX = grid(0, 10, 11);
         const expectedY = expectedX.map((t: number) => t * 2 + 1);
-        expect(y.names).toEqual(["x"]);
         expect(y.x).toEqual(expectedX);
-        expect(approxEqualArray(y.y[0], expectedY)).toBe(true);
+        expect(y.values.length).toBe(1);
+        expect(y.values[0].name).toBe("x");
+        expect(approxEqualArray(y.values[0].y, expectedY)).toBe(true);
     })
 });
 
@@ -161,9 +170,10 @@ describe("can fit a simple line", () => {
         expect(res.data.endTime).toEqual(6);
 
         const yFit = res.data.solution({ mode: TimeMode.Grid, tStart: 0, tEnd: 6, nPoints: 7 });
-        expect(yFit.names).toEqual(["x"]);
         expect(yFit.x).toEqual(time);
-        expect(approxEqualArray(yFit.y[0], data.value)).toBe(true);
+        expect(yFit.values.length).toBe(1);
+        expect(yFit.values[0].name).toBe("x")
+        expect(approxEqualArray(yFit.values[0].y, data.value)).toBe(true);
     });
 
     it("Can fit a simple model with missing data", () => {
