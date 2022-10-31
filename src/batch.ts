@@ -173,7 +173,7 @@ export interface BatchError {
  */
 export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          tStart: number, tEnd: number,
-                         control: Partial<DopriControlParam>) {
+                         control: Partial<DopriControlParam>): Batch {
     const run = (p: UserType, t0: number, t1: number) =>
         wodinRun(Model, p, t0, t1, control);
     return new Batch(run, pars, tStart, tEnd);
@@ -245,7 +245,7 @@ export function batchParsDisplace(base: UserType, name: string, count: number,
     return batchParsRange(base, name, count, logarithmic, min, max);
 }
 
-export function updatePars(base: UserType, name: string, value: number) {
+export function updatePars(base: UserType, name: string, value: number): UserType {
     const ret = { ...base };
     ret[name] = value;
     return ret;
