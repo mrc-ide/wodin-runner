@@ -1,10 +1,21 @@
 import type { DopriControlParam } from "dopri";
 
 import type { OdinModelConstructable } from "./model";
-import { InterpolatedSolution, SeriesSet, TimeMode } from "./solution";
+import { SeriesSet, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
+
+
+export type BatchSolution = (times: Times) => SeriesSet;
+
+// For a start, assume that we have a single type, we can sort out any
+// templating later.
+
+export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => BatchSolution;
+
+export type BatchSolution2<T> = (times: Times) => T;
+export type singleBatchRun2<T> = (pars: UserType, tStart: number, tEnd: number) => BatchSolution2<T>;
 
 export class Batch {
     /** The parameters used for this batch run */
@@ -17,7 +28,7 @@ export class Batch {
     public readonly tEnd: number;
 
     /** An array of solutions */
-    public readonly solutions: InterpolatedSolution[];
+    public readonly solutions: BatchSolution[];
 
     /** An array of errors */
     public readonly errors: BatchError[];
@@ -38,21 +49,19 @@ export class Batch {
      *
      * @param control Optional control parameters to tune the integration
      */
-    constructor(Model: OdinModelConstructable, pars: BatchPars,
-                tStart: number, tEnd: number,
-                control: Partial<DopriControlParam>) {
+    constructor(run: singleBatchRun, pars: BatchPars, tStart: number, tEnd: number) {
         this.pars = pars;
         this.tStart = tStart;
         this.tEnd = tEnd;
 
-        const solutions = [] as InterpolatedSolution[];
-        const errors = [] as BatchError[];
+        const solutions = [] as typeof this.solutions;
+        const errors = [] as typeof this.errors;
         const values = [] as number[];
 
         pars.values.forEach((v: number) => {
             const p = updatePars(pars.base, pars.name, v);
             try {
-                solutions.push(wodinRun(Model, p, tStart, tEnd, control));
+                solutions.push(run(p, tStart, tEnd));
                 values.push(v);
             } catch (e: any) {
                 errors.push({value: v, error: (e as Error).message});
@@ -81,7 +90,7 @@ export class Batch {
      */
     public valueAtTime(time: number): SeriesSet {
         const result = this.solutions.map(
-            (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
+            (s) => s({ mode: TimeMode.Given, times: [time] }));
         const x = this.pars.values;
         const extractSeries = (idx: number) => ({
             name: result[0].values[idx].name,
@@ -118,7 +127,7 @@ export class Batch {
                 tEnd: this.tEnd,
                 tStart: this.tStart,
             } as const;
-            const result = this.solutions.map((s: InterpolatedSolution) => s(times));
+            const result = this.solutions.map((s) => s(times));
             const t = result[0].x;
             const names = result[0].values.map((s) => s.name);
             const extremes = loop(names.length, (idx: number) =>
@@ -174,7 +183,9 @@ export interface BatchError {
 export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          tStart: number, tEnd: number,
                          control: Partial<DopriControlParam>) {
-    return new Batch(Model, pars, tStart, tEnd, control);
+    const run = (pars: UserType, tStart: number, tEnd: number) =>
+        wodinRun(Model, pars, tStart, tEnd, control);
+    return new Batch(run, pars, tStart, tEnd);
 }
 
 /** Generate a set of parameters suitable to pass through to {@link
