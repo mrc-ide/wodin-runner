@@ -175,8 +175,8 @@ export interface BatchError {
 export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          tStart: number, tEnd: number,
                          control: Partial<DopriControlParam>) {
-    const run = (pars: UserType, tStart: number, tEnd: number) =>
-        wodinRun(Model, pars, tStart, tEnd, control);
+    const run = (p: UserType, t0: number, t1: number) =>
+        wodinRun(Model, p, t0, t1, control);
     return new Batch(run, pars, tStart, tEnd);
 }
 
