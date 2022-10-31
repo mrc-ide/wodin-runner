@@ -6,16 +6,8 @@ import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
-
 export type BatchSolution = (times: Times) => SeriesSet;
-
-// For a start, assume that we have a single type, we can sort out any
-// templating later.
-
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => BatchSolution;
-
-export type BatchSolution2<T> = (times: Times) => T;
-export type singleBatchRun2<T> = (pars: UserType, tStart: number, tEnd: number) => BatchSolution2<T>;
 
 export class Batch {
     /** The parameters used for this batch run */
