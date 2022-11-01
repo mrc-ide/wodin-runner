@@ -1,10 +1,12 @@
 import type { DopriControlParam } from "dopri";
 
 import type { OdinModelConstructable } from "./model";
-import { InterpolatedSolution, SeriesSet, TimeMode } from "./solution";
+import { InterpolatedSolution, SeriesSet, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
+
+export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
 
 export class Batch {
     /** The parameters used for this batch run */
@@ -38,9 +40,7 @@ export class Batch {
      *
      * @param control Optional control parameters to tune the integration
      */
-    constructor(Model: OdinModelConstructable, pars: BatchPars,
-                tStart: number, tEnd: number,
-                control: Partial<DopriControlParam>) {
+    constructor(run: singleBatchRun, pars: BatchPars, tStart: number, tEnd: number) {
         this.pars = pars;
         this.tStart = tStart;
         this.tEnd = tEnd;
@@ -52,7 +52,7 @@ export class Batch {
         pars.values.forEach((v: number) => {
             const p = updatePars(pars.base, pars.name, v);
             try {
-                solutions.push(wodinRun(Model, p, tStart, tEnd, control));
+                solutions.push(run(p, tStart, tEnd));
                 values.push(v);
             } catch (e: any) {
                 errors.push({value: v, error: (e as Error).message});
@@ -173,8 +173,10 @@ export interface BatchError {
  */
 export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          tStart: number, tEnd: number,
-                         control: Partial<DopriControlParam>) {
-    return new Batch(Model, pars, tStart, tEnd, control);
+                         control: Partial<DopriControlParam>): Batch {
+    const run = (p: UserType, t0: number, t1: number) =>
+        wodinRun(Model, p, t0, t1, control);
+    return new Batch(run, pars, tStart, tEnd);
 }
 
 /** Generate a set of parameters suitable to pass through to {@link
@@ -243,7 +245,7 @@ export function batchParsDisplace(base: UserType, name: string, count: number,
     return batchParsRange(base, name, count, logarithmic, min, max);
 }
 
-export function updatePars(base: UserType, name: string, value: number) {
+export function updatePars(base: UserType, name: string, value: number): UserType {
     const ret = { ...base };
     ret[name] = value;
     return ret;

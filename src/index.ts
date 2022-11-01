@@ -14,6 +14,7 @@ export {
 export {
     InterpolatedSolution,
     SeriesSet,
+    SeriesSetValues,
     TimeGiven,
     TimeGrid,
     TimeMode,
@@ -27,6 +28,7 @@ export {
     batchParsDisplace,
     batchParsRange,
     batchRun,
+    singleBatchRun,
 } from "./batch";
 export { InternalStorage, UserTensor, UserType, UserValue } from "./user";
 export { versions } from "./versions";
