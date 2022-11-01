@@ -48,7 +48,7 @@ export class Batch {
         this.tEnd = tEnd;
         this.solutions = [];
         this.errors = [];
-        this._pending = pars.values;;
+        this._pending = pars.values;
         this._run = run;
     }
 
@@ -68,7 +68,7 @@ export class Batch {
                 this.solutions.push(this._run(p, this.tStart, this.tEnd));
                 this.pars.values.push(value);
             } catch (e: any) {
-                this.errors.push({value: value, error: (e as Error).message});
+                this.errors.push({ value, error: (e as Error).message });
             }
         }
         const isComplete = this._pending.length === 0;
@@ -84,6 +84,7 @@ export class Batch {
      */
     public run(): void {
         while (!this.compute()) {
+            // tslint:disable-next-line:no-empty
         }
     }
 
