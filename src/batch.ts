@@ -43,6 +43,8 @@ export class Batch {
      * @param control Optional control parameters to tune the integration
      */
     constructor(run: singleBatchRun, pars: BatchPars, tStart: number, tEnd: number) {
+        // Start with an empty BatchPars object, we'll re-add values
+        // as they are successfully computed later.
         this.pars = { ...pars, values: [] as number[]};
         this.tStart = tStart;
         this.tEnd = tEnd;
