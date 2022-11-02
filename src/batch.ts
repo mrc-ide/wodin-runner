@@ -25,6 +25,8 @@ export class Batch {
     public readonly errors: BatchError[];
 
     private _extremes?: Extremes<SeriesSet>;
+    private _pending: number[];
+    private readonly _run: singleBatchRun;
 
     /** Construct a batch run, which will run the model many times
      *
@@ -41,35 +43,51 @@ export class Batch {
      * @param control Optional control parameters to tune the integration
      */
     constructor(run: singleBatchRun, pars: BatchPars, tStart: number, tEnd: number) {
-        this.pars = pars;
+        // Start with an empty BatchPars object, we'll re-add values
+        // as they are successfully computed later.
+        this.pars = { ...pars, values: [] as number[]};
         this.tStart = tStart;
         this.tEnd = tEnd;
+        this.solutions = [];
+        this.errors = [];
+        this._pending = pars.values;
+        this._run = run;
+    }
 
-        const solutions = [] as InterpolatedSolution[];
-        const errors = [] as BatchError[];
-        const values = [] as number[];
-
-        pars.values.forEach((v: number) => {
-            const p = updatePars(pars.base, pars.name, v);
+    /**
+     * Compute the next parameter set in the batch. If all have been
+     * computed, the method will return very quickly but not error.
+     *
+     * @return `true` if all parameter sets have been computed,
+     * `false` otherwise.
+     */
+    public compute(): boolean {
+        if (this._pending.length > 0) {
+            const value = this._pending[0];
+            this._pending = this._pending.slice(1);
+            const p = updatePars(this.pars.base, this.pars.name, value);
             try {
-                solutions.push(run(p, tStart, tEnd));
-                values.push(v);
+                this.solutions.push(this._run(p, this.tStart, this.tEnd));
+                this.pars.values.push(value);
             } catch (e: any) {
-                errors.push({value: v, error: (e as Error).message});
+                this.errors.push({ value, error: (e as Error).message });
             }
-        });
-
-        // We need to think about this error, though it should not
-        // come out that often...
-        if (solutions.length === 0) {
-            throw Error(`All solutions failed; first error: ${errors[0].error}`);
         }
+        const isComplete = this._pending.length === 0;
+        if (isComplete && this.solutions.length === 0) {
+            throw Error(`All solutions failed; first error: ${this.errors[0].error}`);
+        }
+        return isComplete;
+    }
 
-        // We actually only use the value here, so could just save
-        // that, and not the rest, really.
-        this.pars = {...pars, values};
-        this.solutions = solutions;
-        this.errors = errors;
+    /**
+     * Convenience function for computing all parameter sets in one
+     * blocking loop.
+     */
+    public run(): void {
+        while (!this.compute()) {
+            // tslint:disable-next-line:no-empty
+        }
     }
 
     /**
@@ -170,13 +188,21 @@ export interface BatchError {
  * @param tEnd End of the integration (must be greater than `tStart`)
  *
  * @param control Optional control parameters to tune the integration
+ *
+ * @param immediate Indicates if we should immediately compute all
+ * solutions in the batch (may take a while).
  */
 export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
                          tStart: number, tEnd: number,
-                         control: Partial<DopriControlParam>): Batch {
+                         control: Partial<DopriControlParam>,
+                         immediate: boolean = true): Batch {
     const run = (p: UserType, t0: number, t1: number) =>
         wodinRun(Model, p, t0, t1, control);
-    return new Batch(run, pars, tStart, tEnd);
+    const ret = new Batch(run, pars, tStart, tEnd);
+    if (immediate) {
+        ret.run();
+    }
+    return ret;
 }
 
 /** Generate a set of parameters suitable to pass through to {@link

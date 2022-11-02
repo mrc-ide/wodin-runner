@@ -131,6 +131,29 @@ describe("run sensitivity", () => {
         expect(() => batchRun(Oscillate, pars, 0, 10, control))
             .toThrow("All solutions failed; first error: Integration failure: too many steps");
     });
+
+    it("can run in non-blocking mode", () => {
+        const user = { a: 2 };
+        const pars = batchParsRange(user, "a", 3, false, 0, 4);
+        const control = {};
+        const tStart = 0;
+        const tEnd = 10;
+        const obj = batchRun(User, pars, tStart, tEnd, control, false);
+        expect(obj.solutions.length).toBe(0);
+        expect(obj.errors.length).toBe(0);
+
+        expect(obj.compute()).toBe(false);
+        expect(obj.solutions.length).toBe(1);
+        expect(obj.pars.values).toEqual([0]);
+        expect(obj.compute()).toBe(false);
+        expect(obj.solutions.length).toBe(2);
+        expect(obj.pars.values).toEqual([0, 2]);
+        expect(obj.compute()).toBe(true);
+        expect(obj.solutions.length).toBe(3);
+        expect(obj.compute()).toBe(true);
+        expect(obj.solutions.length).toBe(3);
+        expect(obj.pars.values).toEqual([0, 2, 4]);
+    })
 });
 
 describe("can extract from a batch result", () => {
