@@ -124,30 +124,7 @@ export class Batch {
 
     private findExtremes() {
         if (this._extremes === undefined) {
-            // Later we'll polish these off with a 1d optimiser from
-            // ~50 points which will be likely faster and more
-            // accurate; that depends on a 1d optimiser added to
-            // dfoptim, then some additional work in findExtremes
-            // (which will need to accept the solution object too).
-            const n = 501;
-            const times = {
-                mode: TimeMode.Grid,
-                nPoints: n,
-                tEnd: this.tEnd,
-                tStart: this.tStart,
-            } as const;
-            const result = this.solutions.map((s: InterpolatedSolution) => s(times));
-            const t = result[0].x;
-            const names = result[0].values.map((s) => s.name);
-            const extremes = loop(names.length, (idx: number) =>
-                                  result.map((s) => findExtremes(t, s.values[idx].y)));
-            const x = this.pars.values;
-            this._extremes = {
-                tMax: extractExtremes("tMax", names, x, extremes),
-                tMin: extractExtremes("tMin", names, x, extremes),
-                yMax: extractExtremes("yMax", names, x, extremes),
-                yMin: extractExtremes("yMin", names, x, extremes),
-            };
+            this._extremes = computeExtremes(this.tStart, this.tEnd, this.pars.values, this.solutions);
         }
         return this._extremes;
     }
@@ -300,6 +277,36 @@ export interface Extremes<T> {
     yMin: T;
     /** The maximum value of a series */
     yMax: T;
+}
+
+export function computeExtremes(tStart: number, tEnd: number, x: number[],
+                                solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
+    // Later we'll polish these off with a 1d optimiser from
+    // ~50 points which will be likely faster and more
+    // accurate; that depends on a 1d optimiser added to
+    // dfoptim, then some additional work in findExtremes
+    // (which will need to accept the solution object too).
+    const n = 501;
+    const times = {
+        mode: TimeMode.Grid,
+        nPoints: n,
+        tEnd: tEnd,
+        tStart: tStart,
+    } as const;
+    const result = solutions.map((s: InterpolatedSolution) => s(times));
+    return computeExtremesResult(x, result);
+}
+
+export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
+    const names = result[0].values.map((s) => s.name);
+    const extremes = loop(names.length, (idx: number) =>
+                          result.map((s) => findExtremes(s.x, s.values[idx].y)));
+    return {
+        tMax: extractExtremes("tMax", names, x, extremes),
+        tMin: extractExtremes("tMin", names, x, extremes),
+        yMax: extractExtremes("yMax", names, x, extremes),
+        yMin: extractExtremes("yMin", names, x, extremes),
+    };
 }
 
 // Later, we might do some polishing of these, which should make it
