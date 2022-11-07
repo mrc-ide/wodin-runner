@@ -200,7 +200,8 @@ describe("can extract from a batch result", () => {
     });
 });
 
-describe.only("new", () => {
+// npm run test -- --watch --verbose=false --coverage=false test/batch.test.ts
+describe("new", () => {
     it("new", () => {
         const tStart = 0;
         const tEnd = 10;
@@ -212,12 +213,12 @@ describe.only("new", () => {
             values([1, 2, 3, 4, 5]),
             values([2, 3, 4, 5, 6]),
         ];
-        console.log(result);
-        console.log(result[0]);
+        // console.log(result);
+        // console.log(result[0]);
         const extremes = computeExtremesResult(x, result);
-        console.log(extremes);
-        console.log(extremes.tMin);
-        console.log(extremes.tMin.values[0]);
+        // console.log(extremes);
+        // console.log(extremes.tMin);
+        // console.log(extremes.tMin.values[0]);
     });
 
     it("can work with elements that have descriptions", () => {
@@ -231,14 +232,15 @@ describe.only("new", () => {
             values([1, 2, 3, 4, 5]),
             values([2, 3, 4, 5, 6]),
         ];
-        console.log(result);
-        console.log(result[0]);
+        // console.log(result);
+        // console.log(result[0]);
         const extremes = computeExtremesResult(x, result);
-        console.log(extremes);
-        console.log(extremes.tMin);
-        console.log(extremes.tMin.values[0]);
+        // console.log(extremes);
+        // console.log(extremes.tMin);
+        // console.log(extremes.tMin.values[0]);
     });
 
+    // This is the error case that we currently have:
     it.only("can work with elements that have descriptions", () => {
         const tStart = 0;
         const tEnd = 10;
@@ -249,15 +251,22 @@ describe.only("new", () => {
             { name: "a", y: y.map((el) => el - 0.1), description: "Min" }
         ]});
         const result = [
-            values([0, 1, 2, 3, 4]),
+            {
+                x: t, values: [{
+                    name: "a",
+                    y: [0, 1, 2, 3, 4],
+                    description: "Deterministic"
+                }]
+            },
             values([1, 2, 3, 4, 5]),
             values([2, 3, 4, 5, 6]),
         ];
-        console.log(result);
-        console.log(result[0]);
+        // console.log(result);
+        // console.log(result[0]);
         const extremes = computeExtremesResult(x, result);
         console.log(extremes);
-        console.log(extremes.tMin);
-        console.log(extremes.tMin.values[0]);
+        console.log(extremes.yMax);
+        console.log(extremes.yMax.values[0]);
+        console.log(extremes.yMax.values[1]);
     });
 });

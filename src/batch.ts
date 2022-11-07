@@ -1,7 +1,7 @@
 import type { DopriControlParam } from "dopri";
 
 import type { OdinModelConstructable } from "./model";
-import { InterpolatedSolution, SeriesSet, TimeMode, Times } from "./solution";
+import { InterpolatedSolution, SeriesSet, SeriesSetValues, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
 import { grid, gridLog, loop, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
@@ -287,11 +287,6 @@ export interface Extremes<T> {
 
 export function computeExtremes(tStart: number, tEnd: number, x: number[],
                                 solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
-    // Later we'll polish these off with a 1d optimiser from
-    // ~50 points which will be likely faster and more
-    // accurate; that depends on a 1d optimiser added to
-    // dfoptim, then some additional work in findExtremes
-    // (which will need to accept the solution object too).
     const n = 501;
     const times = {
         mode: TimeMode.Grid,
@@ -303,23 +298,6 @@ export function computeExtremes(tStart: number, tEnd: number, x: number[],
     return computeExtremesResult(x, result);
 }
 
-export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
-    const names = result[0].values.map((s) => s.name);
-    console.log(names);
-    const extremes = loop(names.length, (idx: number) =>
-                          result.map((s) => findExtremes(s.x, s.values[idx].y)));
-    console.log(extremes);
-    return {
-        tMax: extractExtremes("tMax", result, x, extremes),
-        tMin: extractExtremes("tMin", result, x, extremes),
-        yMax: extractExtremes("yMax", result, x, extremes),
-        yMin: extractExtremes("yMin", result, x, extremes),
-    };
-}
-
-// Later, we might do some polishing of these, which should make it
-// both faster and more accurate, but we'll need to pass in the
-// correct interpolating function too.
 function findExtremes(t: number[], y: number[]): Extremes<number> {
     const idxMin = whichMin(y);
     const idxMax = whichMax(y);
@@ -330,25 +308,46 @@ function findExtremes(t: number[], y: number[]): Extremes<number> {
     return {tMax, tMin, yMax, yMin};
 }
 
-function extractExtremes(name: keyof Extremes<number>,
-                         result: SeriesSet[],
-                         x: number[],
-                         extremes: Array<Array<Extremes<number>>>): SeriesSet {
+export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
+    const times = result[0].x;
+
+    const newSeriesSet = () => ({ x, values: [] });
+    const ret: Extremes<SeriesSet> = {
+        yMin: newSeriesSet(), yMax: newSeriesSet(), tMin: newSeriesSet(), tMax: newSeriesSet()
+    };
+
     const names = result[0].values.map((s) => s.name);
-    const values = loop(names.length, (idx) =>
-                        ({name: names[idx], y: extremes[idx].map((el) => el[name])}));
-    // Here lies the difficulty: if we have a deterministic trace then
-    // we need to promote it too all the other values if we find them.
-    //
-    // So the first result could have Mean and Min but the second
-    // Determinstic only, and we'd want to get that one upgraded.
-    //
-    // This is why we're seeing the issue. So, we need two loops through here:
-    const info: Dict<string, string[]> = {};
-    
+    for (let nm of names) {
+        const s = repairDeterministic(nm, result);
+        const len = s[0].length;
+        for (let idx = 0; idx < len; ++idx) {
+            const extremes = s.map((el) => findExtremes(times, el[idx].y));
+            Object.keys(ret).forEach((k) => {
+                const key = k as keyof typeof ret;
+                ret[key].values.push({...s[0][idx], y: extremes.map((el) => el[key])});
+            });
+        }
+    }
 
-    // const values = loop(result.length, (idx) =>
-    //                     ({name: names[idx], y: extremes[idx].map((el) => el[name])}));
+    return ret;
+}
 
-    return { x, values };
+function repairDeterministic(name: string, allResults: SeriesSet[]): SeriesSetValues[][] {
+    const result = allResults.map((r) => r.values.filter((el) => el.name === name));
+    const len = result.map((el) => el.length);
+    // We should be ok here, but probably worth checking that:
+    //
+    // only 1 or 2 lengths
+    // that there are only 1 or two distinct set of descriptions
+    // that description is non-empty
+    if ((new Set(len)).size !== 1) {
+        const n = Math.max(...len);
+        const description = result[len.indexOf(n)].map((el) => el.description as string);
+        for (let i = 0; i < result.length; ++i) {
+            if (result[i].length === 1) {
+                result[i] = description.map((desc: string) => ({ ...result[i][0], description: desc }));
+            }
+        }
+    }
+    return result;
 }
