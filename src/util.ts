@@ -47,3 +47,7 @@ export function loop<T>(n: number, f: (i: number) => T): T[] {
 export function unique<T>(x: T[]): T[] {
     return [...new Set(x)];
 }
+
+export function sameArrayContents<T>(x: T[], y: T[]): boolean {
+    return x.length === y.length && x.every((el: T, idx: number) => y[idx] === el);
+}

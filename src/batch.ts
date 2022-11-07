@@ -3,7 +3,7 @@ import type { DopriControlParam } from "dopri";
 import type { OdinModelConstructable } from "./model";
 import { InterpolatedSolution, SeriesSet, SeriesSetValues, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
-import { grid, gridLog, loop, unique, whichMax, whichMin } from "./util";
+import { grid, gridLog, loop, sameArrayContents, unique, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
@@ -122,12 +122,6 @@ export class Batch {
         return this.findExtremes()[name];
     }
 
-    // plan - rewrite this in terms of free functions that take the
-    // different types, then we go through and rewrite things so that
-    // we can test the specific cases in dust. The issue to hit is
-    // that with some cases we might have a deterministic series 0 but
-    // nondeterministic later, and that will require care, but just
-    // happened to work before because we guaranteed a single trace.
     private findExtremes() {
         if (this._extremes === undefined) {
             this._extremes = computeExtremes(this.tStart, this.tEnd, this.pars.values, this.solutions);
@@ -334,19 +328,45 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
 
 function repairDeterministic(result: SeriesSetValues[][]): SeriesSetValues[][] {
     const len = result.map((el) => el.length);
-    // We should be ok here, but probably worth checking that:
-    //
-    // only 1 or 2 lengths
-    // that there are only 1 or two distinct set of descriptions
-    // that description is non-empty
-    if ((new Set(len)).size !== 1) {
-        const n = Math.max(...len);
-        const description = result[len.indexOf(n)].map((el) => el.description as string);
-        for (let i = 0; i < result.length; ++i) {
-            if (result[i].length === 1) {
-                result[i] = description.map((desc: string) => ({ ...result[i][0], description: desc }));
-            }
+    if (len.every((el) => el === 1)) {
+        return result;
+    }
+    const n = Math.max(...len);
+    const description = repairDeterministicDescription(result);
+    for (let i = 0; i < result.length; ++i) {
+        if (result[i].length === 1) {
+            result[i] = description.map((desc: string) => ({ ...result[i][0], description: desc }));
         }
     }
     return result;
+}
+
+// All the error handling is here; we should never trigger this in a
+// real run, but exists to prevent issues with changes to odin/dust
+// that might upset it.
+export function repairDeterministicDescription(result: SeriesSetValues[][]): string[] {
+    let descriptionSingle: string | undefined | null = null;
+    let description: string[] = [];
+    result.forEach((r) => {
+        if (r.length === 1) {
+            const d = r[0].description;
+            if (descriptionSingle === null) {
+                descriptionSingle = d;
+            } else if (d !== descriptionSingle) {
+                throw Error(`Unexpected inconsistent descriptions: have ${descriptionSingle}, but given ${d}`);
+            }
+        } else {
+            const d = r.map((el) => el.description);
+            if (description.length === 0) {
+                if (d.some((el) => el === undefined)) {
+                    throw Error("Expected all descriptions to be defined");
+                }
+                description = d as string[]; // safe because of previous check
+            } else if (!sameArrayContents(d, description)) {
+                throw Error(`Unexpected inconsistent descriptions: have [${description.join(", ")}], but given [${d.join(", ")}]`);
+            }
+        }
+    });
+
+    return description;
 }

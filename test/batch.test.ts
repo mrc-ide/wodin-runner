@@ -1,5 +1,5 @@
-import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, updatePars } from "../src/batch";
-import { TimeMode } from "../src/solution";
+import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, repairDeterministicDescription, updatePars } from "../src/batch";
+import { SeriesSetValues, TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
@@ -330,5 +330,39 @@ describe("computeExtremes", () => {
             { name: "b", y: [12, 15, 18], description: "Mean" });
         expect(extremes.yMax.values[3]).toStrictEqual(
             { name: "b", y: [12, 10, 12], description: "Min" });
+    });
+});
+
+describe("can prevent issues with misshaped outputs", () => {
+    const ssv = (description: string | undefined): SeriesSetValues => ({description, name: "x", y: []});
+
+    it("handles happy cases", () => {
+
+        expect(repairDeterministicDescription([[ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+        expect(repairDeterministicDescription([[ssv("a"), ssv("b")], [ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+        expect(repairDeterministicDescription(Array(4).fill([ssv("a"), ssv("b")]))).toStrictEqual(["a", "b"]);
+        expect(repairDeterministicDescription([[ssv("x")], [ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+        expect(repairDeterministicDescription([[ssv(undefined)], [ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+    });
+
+    it("prevents mix of undefined and labeled descriptions", () => {
+        expect(() => repairDeterministicDescription([[ssv("a"), ssv(undefined)]]))
+            .toThrow("Expected all descriptions to be defined");
+        expect(() => repairDeterministicDescription([[ssv("a"), ssv(undefined), ssv("b")]]))
+            .toThrow("Expected all descriptions to be defined");
+    });
+
+    it("ensures consistency of unreplicated series", () => {
+        expect(() => repairDeterministicDescription([[ssv("a")], [ssv("b")]]))
+            .toThrow("Unexpected inconsistent descriptions: have a, but given b");
+        expect(() => repairDeterministicDescription([[ssv("a")], [ssv(undefined)]]))
+            .toThrow("Unexpected inconsistent descriptions: have a, but given undefined");
+    });
+
+    it("ensures consistency of replicated series", () => {
+        expect(() => repairDeterministicDescription([[ssv("a"), ssv("b")], [ssv("b"), ssv("a")]]))
+            .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [b, a]");
+        expect(() => repairDeterministicDescription([[ssv("a"), ssv("b")], [ssv("a"), ssv("b"), ssv("c")]]))
+            .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [a, b, c]");
     });
 });
