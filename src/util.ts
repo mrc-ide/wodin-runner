@@ -43,3 +43,7 @@ export function loop<T>(n: number, f: (i: number) => T): T[] {
     }
     return ret;
 }
+
+export function unique<T>(x: T[]): T[] {
+    return [...new Set(x)];
+}

@@ -221,6 +221,7 @@ describe("new", () => {
         // console.log(extremes.tMin.values[0]);
     });
 
+    // This is the trivial dust case; one summary, copy over description
     it("can work with elements that have descriptions", () => {
         const tStart = 0;
         const tEnd = 10;
@@ -232,16 +233,51 @@ describe("new", () => {
             values([1, 2, 3, 4, 5]),
             values([2, 3, 4, 5, 6]),
         ];
-        // console.log(result);
-        // console.log(result[0]);
         const extremes = computeExtremesResult(x, result);
-        // console.log(extremes);
-        // console.log(extremes.tMin);
-        // console.log(extremes.tMin.values[0]);
+        console.log(extremes);
+        console.log(extremes.yMax);
+        console.log(extremes.yMax.values[0]);
+
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(1);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
     });
 
-    // This is the error case that we currently have:
-    it.only("can work with elements that have descriptions", () => {
+    // This is the usual dust case; we have multiple summary
+    // statistics that perfectly align and we want to make sure that
+    // we copy over the descriptions.
+    it.only("can work with multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [
+            { name: "a", y, description: "Mean" },
+            { name: "a", y: y.map((el) => el - 0.5), description: "Min" },
+            { name: "a", y: y.map((el) => el + 0.5), description: "Max" }
+        ]});
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        const extremes = computeExtremesResult(x, result);
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(3);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
+        expect(extremes.yMax.values[1]).toStrictEqual(
+            { name: "a", y: [3.5, 4.5, 5.5], description: "Min" });
+        expect(extremes.yMax.values[2]).toStrictEqual(
+            { name: "a", y: [4.5, 5.5, 6.5], description: "Max" });
+    });
+
+    // This is the motivating case for repairDeterministic; one
+    // parameter set returns a deterministic trace but the other two
+    // have both Mean and Min - we expect that our final set of
+    // extremes will have Mean and Min.
+    it("can work with elements that have descriptions", () => {
         const tStart = 0;
         const tEnd = 10;
         const x = [0, 1, 2]; // parameter values
@@ -261,12 +297,12 @@ describe("new", () => {
             values([1, 2, 3, 4, 5]),
             values([2, 3, 4, 5, 6]),
         ];
-        // console.log(result);
-        // console.log(result[0]);
         const extremes = computeExtremesResult(x, result);
-        console.log(extremes);
-        console.log(extremes.yMax);
-        console.log(extremes.yMax.values[0]);
-        console.log(extremes.yMax.values[1]);
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(2);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
+        expect(extremes.yMax.values[1]).toStrictEqual(
+            { name: "a", y: [4, 4.9, 5.9], description: "Min" });
     });
 });

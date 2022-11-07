@@ -3,7 +3,7 @@ import type { DopriControlParam } from "dopri";
 import type { OdinModelConstructable } from "./model";
 import { InterpolatedSolution, SeriesSet, SeriesSetValues, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
-import { grid, gridLog, loop, whichMax, whichMin } from "./util";
+import { grid, gridLog, loop, unique, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
@@ -316,7 +316,7 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
         yMin: newSeriesSet(), yMax: newSeriesSet(), tMin: newSeriesSet(), tMax: newSeriesSet()
     };
 
-    const names = result[0].values.map((s) => s.name);
+    const names = unique(result[0].values.map((s) => s.name));
     for (let nm of names) {
         const s = repairDeterministic(nm, result);
         const len = s[0].length;
