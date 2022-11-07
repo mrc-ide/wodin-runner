@@ -36,14 +36,6 @@ export function whichMax(x: number[]) {
     return idx;
 }
 
-export function loop<T>(n: number, f: (i: number) => T): T[] {
-    const ret = [];
-    for (let i = 0; i < n; ++i) {
-        ret.push(f(i));
-    }
-    return ret;
-}
-
 export function unique<T>(x: T[]): T[] {
     return [...new Set(x)];
 }

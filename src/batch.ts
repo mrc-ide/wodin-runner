@@ -3,7 +3,7 @@ import type { DopriControlParam } from "dopri";
 import type { OdinModelConstructable } from "./model";
 import { InterpolatedSolution, SeriesSet, SeriesSetValues, TimeMode, Times } from "./solution";
 import { UserType } from "./user";
-import { grid, gridLog, loop, sameArrayContents, unique, whichMax, whichMin } from "./util";
+import { grid, gridLog, sameArrayContents, unique, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
