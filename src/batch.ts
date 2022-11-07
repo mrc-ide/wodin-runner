@@ -285,8 +285,8 @@ export function computeExtremes(tStart: number, tEnd: number, x: number[],
     const times = {
         mode: TimeMode.Grid,
         nPoints: n,
-        tEnd: tEnd,
-        tStart: tStart,
+        tEnd,
+        tStart,
     } as const;
     const result = solutions.map((s: InterpolatedSolution) => s(times));
     return computeExtremesResult(x, result);
@@ -307,11 +307,11 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
 
     const newSeriesSet = () => ({ x, values: [] });
     const ret: Extremes<SeriesSet> = {
-        yMin: newSeriesSet(), yMax: newSeriesSet(), tMin: newSeriesSet(), tMax: newSeriesSet()
+        tMax: newSeriesSet(), tMin: newSeriesSet(), yMax: newSeriesSet(), yMin: newSeriesSet(),
     };
 
     const names = unique(result[0].values.map((s) => s.name));
-    for (let nm of names) {
+    for (const nm of names) {
         const s = repairDeterministic(result.map((r) => r.values.filter((el) => el.name === nm)));
         const len = s[0].length;
         for (let idx = 0; idx < len; ++idx) {
