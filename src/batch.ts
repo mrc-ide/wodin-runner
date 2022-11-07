@@ -318,7 +318,7 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
 
     const names = unique(result[0].values.map((s) => s.name));
     for (let nm of names) {
-        const s = repairDeterministic(nm, result);
+        const s = repairDeterministic(result.map((r) => r.values.filter((el) => el.name === nm)));
         const len = s[0].length;
         for (let idx = 0; idx < len; ++idx) {
             const extremes = s.map((el) => findExtremes(times, el[idx].y));
@@ -332,8 +332,7 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
     return ret;
 }
 
-function repairDeterministic(name: string, allResults: SeriesSet[]): SeriesSetValues[][] {
-    const result = allResults.map((r) => r.values.filter((el) => el.name === name));
+function repairDeterministic(result: SeriesSetValues[][]): SeriesSetValues[][] {
     const len = result.map((el) => el.length);
     // We should be ok here, but probably worth checking that:
     //
