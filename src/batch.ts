@@ -122,6 +122,12 @@ export class Batch {
         return this.findExtremes()[name];
     }
 
+    // plan - rewrite this in terms of free functions that take the
+    // different types, then we go through and rewrite things so that
+    // we can test the specific cases in dust. The issue to hit is
+    // that with some cases we might have a deterministic series 0 but
+    // nondeterministic later, and that will require care, but just
+    // happened to work before because we guaranteed a single trace.
     private findExtremes() {
         if (this._extremes === undefined) {
             this._extremes = computeExtremes(this.tStart, this.tEnd, this.pars.values, this.solutions);
@@ -299,13 +305,15 @@ export function computeExtremes(tStart: number, tEnd: number, x: number[],
 
 export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
     const names = result[0].values.map((s) => s.name);
+    console.log(names);
     const extremes = loop(names.length, (idx: number) =>
                           result.map((s) => findExtremes(s.x, s.values[idx].y)));
+    console.log(extremes);
     return {
-        tMax: extractExtremes("tMax", names, x, extremes),
-        tMin: extractExtremes("tMin", names, x, extremes),
-        yMax: extractExtremes("yMax", names, x, extremes),
-        yMin: extractExtremes("yMin", names, x, extremes),
+        tMax: extractExtremes("tMax", result, x, extremes),
+        tMin: extractExtremes("tMin", result, x, extremes),
+        yMax: extractExtremes("yMax", result, x, extremes),
+        yMin: extractExtremes("yMin", result, x, extremes),
     };
 }
 
@@ -323,10 +331,24 @@ function findExtremes(t: number[], y: number[]): Extremes<number> {
 }
 
 function extractExtremes(name: keyof Extremes<number>,
-                         names: string[],
+                         result: SeriesSet[],
                          x: number[],
                          extremes: Array<Array<Extremes<number>>>): SeriesSet {
+    const names = result[0].values.map((s) => s.name);
     const values = loop(names.length, (idx) =>
                         ({name: names[idx], y: extremes[idx].map((el) => el[name])}));
+    // Here lies the difficulty: if we have a deterministic trace then
+    // we need to promote it too all the other values if we find them.
+    //
+    // So the first result could have Mean and Min but the second
+    // Determinstic only, and we'd want to get that one upgraded.
+    //
+    // This is why we're seeing the issue. So, we need two loops through here:
+    const info: Dict<string, string[]> = {};
+    
+
+    // const values = loop(result.length, (idx) =>
+    //                     ({name: names[idx], y: extremes[idx].map((el) => el[name])}));
+
     return { x, values };
 }

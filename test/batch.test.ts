@@ -1,4 +1,4 @@
-import { batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
+import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, updatePars } from "../src/batch";
 import { TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
@@ -197,5 +197,67 @@ describe("can extract from a batch result", () => {
         expect(e.values[1].name).toBe("y");
         expect(approxEqualArray(e.values[0].y, [1, 11, 21, 31, 41])).toBe(true);
         expect(approxEqualArray(e.values[1].y, [2, 22, 42, 62, 82])).toBe(true);
+    });
+});
+
+describe.only("new", () => {
+    it("new", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [{ name: "a", y }] });
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        console.log(result);
+        console.log(result[0]);
+        const extremes = computeExtremesResult(x, result);
+        console.log(extremes);
+        console.log(extremes.tMin);
+        console.log(extremes.tMin.values[0]);
+    });
+
+    it("can work with elements that have descriptions", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [{ name: "a", y, description: "Mean" }] });
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        console.log(result);
+        console.log(result[0]);
+        const extremes = computeExtremesResult(x, result);
+        console.log(extremes);
+        console.log(extremes.tMin);
+        console.log(extremes.tMin.values[0]);
+    });
+
+    it.only("can work with elements that have descriptions", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [
+            { name: "a", y, description: "Mean" },
+            { name: "a", y: y.map((el) => el - 0.1), description: "Min" }
+        ]});
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        console.log(result);
+        console.log(result[0]);
+        const extremes = computeExtremesResult(x, result);
+        console.log(extremes);
+        console.log(extremes.tMin);
+        console.log(extremes.tMin.values[0]);
     });
 });
