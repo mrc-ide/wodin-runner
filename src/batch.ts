@@ -98,15 +98,7 @@ export class Batch {
      * represent the beginning and end of the solution
      */
     public valueAtTime(time: number): SeriesSet {
-        const result = this.solutions.map(
-            (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
-        const x = this.pars.values;
-        const extractSeries = (idx: number) => ({
-            name: result[0].values[idx].name,
-            y: result.map((r) => r.values[idx].y[0]),
-        });
-        const values = result[0].values.map((_: any, idx: number) => extractSeries(idx));
-        return { values, x };
+        return valueAtTime(time, this.pars.values, this.solutions);
     }
 
     /**
@@ -263,6 +255,26 @@ function getParameterValueAsNumber(pars: UserType, name: string): number {
         throw Error(`Expected a number for '${name}'`);
     }
     return value;
+}
+
+export function valueAtTime(time: number, x: number[], solutions: InterpolatedSolution[]): SeriesSet {
+    const result = solutions.map(
+        (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
+    return valueAtTimeResult(x, result);
+}
+
+export function valueAtTimeResult(x: number[], result: SeriesSet[]): SeriesSet {
+    const ret: SeriesSet = { x, values: [] };
+    const names = unique(result[0].values.map((s) => s.name));
+    for (const nm of names) {
+        const s = repairDeterministic(result.map((r) => r.values.filter((el) => el.name === nm)));
+        const len = s[0].length;
+        for (let idx = 0; idx < len; ++idx) {
+            const y = s.map((el) => el[idx].y[0]);
+            ret.values.push({...s[0][idx], y });
+        }
+    }
+    return ret;
 }
 
 /**
