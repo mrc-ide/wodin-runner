@@ -1,4 +1,4 @@
-import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, repairDeterministicDescription, updatePars } from "../src/batch";
+import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, repairDeterministicDescription, updatePars, valueAtTimeResult } from "../src/batch";
 import { SeriesSetValues, TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
@@ -200,7 +200,84 @@ describe("can extract from a batch result", () => {
     });
 });
 
-// npm run test -- --watch --verbose=false --coverage=false test/batch.test.ts
+describe("valueAtTime", () => {
+    it("can work with simple odin output", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [{ name: "a", y: [y] }] });
+        const result = [values(4), values(5), values(6)];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+        expect(res.values.length).toBe(1);
+        expect(res.values[0].name).toBe("a");
+        expect(res.values[0].y).toStrictEqual([4, 5, 6]);
+    });
+
+    it("can work with elements that have descriptions", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [{ name: "a", y: [y], description: "Mean" }] });
+        const result = [values(4), values(5), values(6)];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+        expect(res.values.length).toBe(1);
+        expect(res.values[0].name).toBe("a");
+        expect(res.values[0].y).toStrictEqual([4, 5, 6]);
+        expect(res.values[0].description).toBe("Mean");
+    });
+
+    it("can work with multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [
+            { name: "a", y: [y], description: "Mean" },
+            { name: "a", y: [y - 0.5], description: "Min" },
+            { name: "a", y: [y + 0.5], description: "Max" }
+        ]});
+        const result = [values(4), values(5), values(6)];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+
+        expect(res.values.length).toBe(3);
+        expect(res.values[0]).toStrictEqual({name: "a", description: "Mean", y: [4, 5, 6]});
+        expect(res.values[1]).toStrictEqual({name: "a", description: "Min", y: [3.5, 4.5, 5.5]});
+        expect(res.values[2]).toStrictEqual({name: "a", description: "Max", y: [4.5, 5.5, 6.5]});
+    });
+
+    // This is the motivating case for repairDeterministic; one
+    // parameter set returns a deterministic trace but the other two
+    // have both Mean and Min - we expect that our final set of
+    // extremes will have Mean and Min.
+    it("can work unequal multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [
+            { name: "a", y: [y], description: "Mean" },
+            { name: "a", y: [y - 0.1], description: "Min" }
+        ]});
+        const result = [
+            {
+                x: t, values: [{ name: "a", y: [4], description: "Deterministic" }]
+            },
+            values(5),
+            values(6),
+        ];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+        expect(res.values.length).toBe(2);
+        expect(res.values[0]).toStrictEqual({name: "a", description: "Mean", y: [4, 5, 6]});
+        expect(res.values[1]).toStrictEqual({name: "a", description: "Min", y: [4, 4.9, 5.9]});
+    });
+});
+
 describe("computeExtremes", () => {
     it("can work with simple odin output", () => {
         const tStart = 0;
@@ -269,7 +346,7 @@ describe("computeExtremes", () => {
     // parameter set returns a deterministic trace but the other two
     // have both Mean and Min - we expect that our final set of
     // extremes will have Mean and Min.
-    it("can work with elements that have descriptions", () => {
+    it("can work unequal multiple summaries", () => {
         const tStart = 0;
         const tEnd = 10;
         const x = [0, 1, 2]; // parameter values
