@@ -17,6 +17,12 @@ export interface SeriesSet {
 }
 
 export interface SeriesSetValues {
+    /**
+     * An optional description for this series. This is useful if you
+     * have more than one element with the same `name` within a
+     * particular `SeriesSet`
+     */
+    description?: string;
     /** The name of the series */
     name: string;
     /** The value of the traces, over the time domain */

@@ -1,5 +1,5 @@
-import { batchParsDisplace, batchParsRange, batchRun, updatePars } from "../src/batch";
-import { TimeMode } from "../src/solution";
+import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, alignDescriptionsGetLevels, updatePars, valueAtTimeResult } from "../src/batch";
+import { SeriesSetValues, TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
@@ -197,5 +197,278 @@ describe("can extract from a batch result", () => {
         expect(e.values[1].name).toBe("y");
         expect(approxEqualArray(e.values[0].y, [1, 11, 21, 31, 41])).toBe(true);
         expect(approxEqualArray(e.values[1].y, [2, 22, 42, 62, 82])).toBe(true);
+    });
+});
+
+describe("valueAtTime", () => {
+    it("can work with simple odin output", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [{ name: "a", y: [y] }] });
+        const result = [values(4), values(5), values(6)];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+        expect(res.values.length).toBe(1);
+        expect(res.values[0].name).toBe("a");
+        expect(res.values[0].y).toStrictEqual([4, 5, 6]);
+    });
+
+    it("can work with elements that have descriptions", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [{ name: "a", y: [y], description: "Mean" }] });
+        const result = [values(4), values(5), values(6)];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+        expect(res.values.length).toBe(1);
+        expect(res.values[0].name).toBe("a");
+        expect(res.values[0].y).toStrictEqual([4, 5, 6]);
+        expect(res.values[0].description).toBe("Mean");
+    });
+
+    it("can work with multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [
+            { name: "a", y: [y], description: "Mean" },
+            { name: "a", y: [y - 0.5], description: "Min" },
+            { name: "a", y: [y + 0.5], description: "Max" }
+        ]});
+        const result = [values(4), values(5), values(6)];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+
+        expect(res.values.length).toBe(3);
+        expect(res.values[0]).toStrictEqual({name: "a", description: "Mean", y: [4, 5, 6]});
+        expect(res.values[1]).toStrictEqual({name: "a", description: "Min", y: [3.5, 4.5, 5.5]});
+        expect(res.values[2]).toStrictEqual({name: "a", description: "Max", y: [4.5, 5.5, 6.5]});
+    });
+
+    // This is the motivating case for repairDeterministic; one
+    // parameter set returns a deterministic trace but the other two
+    // have both Mean and Min - we expect that our final set of
+    // extremes will have Mean and Min.
+    it("can work unequal multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number) => ({ x: t, values: [
+            { name: "a", y: [y], description: "Mean" },
+            { name: "a", y: [y - 0.1], description: "Min" }
+        ]});
+        const result = [
+            {
+                x: t, values: [{ name: "a", y: [4], description: "Deterministic" }]
+            },
+            values(5),
+            values(6),
+        ];
+        const res = valueAtTimeResult(x, result);
+        expect(res.x).toStrictEqual(x);
+        expect(res.values.length).toBe(2);
+        expect(res.values[0]).toStrictEqual({name: "a", description: "Mean", y: [4, 5, 6]});
+        expect(res.values[1]).toStrictEqual({name: "a", description: "Min", y: [4, 4.9, 5.9]});
+    });
+});
+
+describe("computeExtremes", () => {
+    it("can work with simple odin output", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [{ name: "a", y }] });
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        const extremes = computeExtremesResult(x, result);
+    });
+
+    // This is the trivial dust case; one summary, copy over description
+    it("can work with elements that have descriptions", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [{ name: "a", y, description: "Mean" }] });
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        const extremes = computeExtremesResult(x, result);
+
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(1);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
+    });
+
+    // This is the usual dust case; we have multiple summary
+    // statistics that perfectly align and we want to make sure that
+    // we copy over the descriptions.
+    it("can work with multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [
+            { name: "a", y, description: "Mean" },
+            { name: "a", y: y.map((el) => el - 0.5), description: "Min" },
+            { name: "a", y: y.map((el) => el + 0.5), description: "Max" }
+        ]});
+        const result = [
+            values([0, 1, 2, 3, 4]),
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        const extremes = computeExtremesResult(x, result);
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(3);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
+        expect(extremes.yMax.values[1]).toStrictEqual(
+            { name: "a", y: [3.5, 4.5, 5.5], description: "Min" });
+        expect(extremes.yMax.values[2]).toStrictEqual(
+            { name: "a", y: [4.5, 5.5, 6.5], description: "Max" });
+    });
+
+    // This is the motivating case for repairDeterministic; one
+    // parameter set returns a deterministic trace but the other two
+    // have both Mean and Min - we expect that our final set of
+    // extremes will have Mean and Min.
+    it("can work unequal multiple summaries", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [
+            { name: "a", y, description: "Mean" },
+            { name: "a", y: y.map((el) => el - 0.1), description: "Min" }
+        ]});
+        const result = [
+            {
+                x: t, values: [{
+                    name: "a",
+                    y: [0, 1, 2, 3, 4],
+                    description: "Deterministic"
+                }]
+            },
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        const extremes = computeExtremesResult(x, result);
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(2);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
+        expect(extremes.yMax.values[1]).toStrictEqual(
+            { name: "a", y: [4, 4.9, 5.9], description: "Min" });
+    });
+
+    it("can work with multiple series, too", () => {
+        const tStart = 0;
+        const tEnd = 10;
+        const x = [0, 1, 2]; // parameter values
+        const t = [0, 1, 2, 3, 4];
+        const values = (y: number[]) => ({ x: t, values: [
+            { name: "a", y, description: "Mean" },
+            { name: "a", y: y.map((el) => el - 0.1), description: "Min" },
+            { name: "b", y: y.map((el) => el * 3), description: "Mean" },
+            { name: "b", y: y.map((el) => el * 2), description: "Min" }
+        ]});
+        const result = [
+            {
+                x: t, values: [
+                    { name: "a", y: [0, 1, 2, 3, 4], description: "Deterministic" },
+                    { name: "b", y: [0, 3, 6, 9, 12], description: "Deterministic" }
+                ]
+            },
+            values([1, 2, 3, 4, 5]),
+            values([2, 3, 4, 5, 6]),
+        ];
+        const extremes = computeExtremesResult(x, result);
+        expect(extremes.yMax.x).toStrictEqual(x);
+        expect(extremes.yMax.values.length).toBe(4);
+        expect(extremes.yMax.values[0]).toStrictEqual(
+            { name: "a", y: [4, 5, 6], description: "Mean" });
+        expect(extremes.yMax.values[1]).toStrictEqual(
+            { name: "a", y: [4, 4.9, 5.9], description: "Min" });
+        expect(extremes.yMax.values[2]).toStrictEqual(
+            { name: "b", y: [12, 15, 18], description: "Mean" });
+        expect(extremes.yMax.values[3]).toStrictEqual(
+            { name: "b", y: [12, 10, 12], description: "Min" });
+    });
+
+    it("recomputes when run in nonblocking mode", () => {
+        const user = { a: 2 };
+        const pars = batchParsRange(user, "a", 3, false, 0, 4);
+        const control = {};
+        const tStart = 0;
+        const tEnd = 10;
+        const obj = batchRun(User, pars, tStart, tEnd, control, false);
+
+        // Empty case succeeds:
+        const e0 = obj.extreme("yMax");
+        expect(e0.x).toStrictEqual([]);
+        expect(e0.values).toStrictEqual([]);
+
+        // Single case runs
+        obj.compute();
+        const e1 = obj.extreme("yMax");
+        expect(e1.x).toStrictEqual([pars.values[0]]);
+        expect(e1.values[0].y.length).toBe(1);
+
+        // Then do the lot
+        obj.run();
+        const e3 = obj.extreme("yMax");
+        expect(e3.x).toStrictEqual(pars.values);
+        expect(e3.values[0].y.length).toBe(3);
+
+        // Check that the single case was a subset of the full set
+        expect(e3.values[0].y[0]).toBe(e1.values[0].y[0]);
+    });
+});
+
+describe("can prevent issues with misshaped outputs", () => {
+    const ssv = (description: string | undefined): SeriesSetValues => ({description, name: "x", y: []});
+
+    it("handles happy cases", () => {
+
+        expect(alignDescriptionsGetLevels([[ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+        expect(alignDescriptionsGetLevels([[ssv("a"), ssv("b")], [ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+        expect(alignDescriptionsGetLevels(Array(4).fill([ssv("a"), ssv("b")]))).toStrictEqual(["a", "b"]);
+        expect(alignDescriptionsGetLevels([[ssv("x")], [ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+        expect(alignDescriptionsGetLevels([[ssv(undefined)], [ssv("a"), ssv("b")]])).toStrictEqual(["a", "b"]);
+    });
+
+    it("prevents mix of undefined and labeled descriptions", () => {
+        expect(() => alignDescriptionsGetLevels([[ssv("a"), ssv(undefined)]]))
+            .toThrow("Expected all descriptions to be defined");
+        expect(() => alignDescriptionsGetLevels([[ssv("a"), ssv(undefined), ssv("b")]]))
+            .toThrow("Expected all descriptions to be defined");
+    });
+
+    it("ensures consistency of unreplicated series", () => {
+        expect(() => alignDescriptionsGetLevels([[ssv("a")], [ssv("b")]]))
+            .toThrow("Unexpected inconsistent descriptions: have a, but given b");
+        expect(() => alignDescriptionsGetLevels([[ssv("a")], [ssv(undefined)]]))
+            .toThrow("Unexpected inconsistent descriptions: have a, but given undefined");
+    });
+
+    it("ensures consistency of replicated series", () => {
+        expect(() => alignDescriptionsGetLevels([[ssv("a"), ssv("b")], [ssv("b"), ssv("a")]]))
+            .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [b, a]");
+        expect(() => alignDescriptionsGetLevels([[ssv("a"), ssv("b")], [ssv("a"), ssv("b"), ssv("c")]]))
+            .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [a, b, c]");
     });
 });
