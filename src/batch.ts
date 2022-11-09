@@ -27,6 +27,7 @@ export class Batch {
     private _extremes?: Extremes<SeriesSet>;
     private _pending: number[];
     private readonly _run: singleBatchRun;
+    private readonly _nPointsForExtremes: number;
 
     /** Construct a batch run, which will run the model many times
      *
@@ -40,9 +41,11 @@ export class Batch {
      *
      * @param tEnd End of the integration (must be greater than `tStart`)
      *
-     * @param control Optional control parameters to tune the integration
+     * @param nPointsForExtremes Number of points to use when
+     * computing extremes. Larger numbers will be more accurate.
      */
-    constructor(run: singleBatchRun, pars: BatchPars, tStart: number, tEnd: number) {
+    constructor(run: singleBatchRun, pars: BatchPars, tStart: number, tEnd: number,
+                nPointsForExtremes: number = 501) {
         // Start with an empty BatchPars object, we'll re-add values
         // as they are successfully computed later.
         this.pars = { ...pars, values: [] as number[]};
@@ -52,6 +55,7 @@ export class Batch {
         this.errors = [];
         this._pending = pars.values;
         this._run = run;
+        this._nPointsForExtremes = nPointsForExtremes;
     }
 
     /**
@@ -116,7 +120,13 @@ export class Batch {
 
     private findExtremes() {
         if (this._extremes === undefined) {
-            const extremes = computeExtremes(this.tStart, this.tEnd, this.pars.values, this.solutions);
+            const times = {
+                mode: TimeMode.Grid,
+                nPoints: this._nPointsForExtremes,
+                tEnd: this.tEnd,
+                tStart: this.tStart,
+            } as const;
+            const extremes = computeExtremes(times, this.pars.values, this.solutions);
             if (this._pending.length !== 0) {
                 return extremes;
             }
@@ -325,19 +335,7 @@ export interface Extremes<T> {
     yMax: T;
 }
 
-// TODO: It's possible that for the discrete time models we should do
-// this differently. I think allowing customisation of the number of
-// points here would be sensible, as then we can look this up more
-// accurately for dust.
-function computeExtremes(tStart: number, tEnd: number, x: number[],
-                         solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
-    const n = 501;
-    const times = {
-        mode: TimeMode.Grid,
-        nPoints: n,
-        tEnd,
-        tStart,
-    } as const;
+function computeExtremes(times: Times, x: number[], solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
     const result = solutions.map((s: InterpolatedSolution) => s(times));
     return computeExtremesResult(x, result);
 }
