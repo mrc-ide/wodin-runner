@@ -294,7 +294,7 @@ function valueAtTime(time: number, x: number[], solutions: InterpolatedSolution[
 // from this.
 //
 // There's a complication where we have deterministic traces mixed in
-// with more than one stochastic summaries; se below for details.
+// with more than one stochastic summaries; see below for details.
 export function valueAtTimeResult(x: number[], result: SeriesSet[]): SeriesSet {
     const ret: SeriesSet = { x, values: [] };
     const names = unique(result[0].values.map((s) => s.name));
