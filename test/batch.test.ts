@@ -408,6 +408,35 @@ describe("computeExtremes", () => {
         expect(extremes.yMax.values[3]).toStrictEqual(
             { name: "b", y: [12, 10, 12], description: "Min" });
     });
+
+    it("recomputes when run in nonblocking mode", () => {
+        const user = { a: 2 };
+        const pars = batchParsRange(user, "a", 3, false, 0, 4);
+        const control = {};
+        const tStart = 0;
+        const tEnd = 10;
+        const obj = batchRun(User, pars, tStart, tEnd, control, false);
+
+        // Empty case succeeds:
+        const e0 = obj.extreme("yMax");
+        expect(e0.x).toStrictEqual([]);
+        expect(e0.values).toStrictEqual([]);
+
+        // Single case runs
+        obj.compute();
+        const e1 = obj.extreme("yMax");
+        expect(e1.x).toStrictEqual([pars.values[0]]);
+        expect(e1.values[0].y.length).toBe(1);
+
+        // Then do the lot
+        obj.run();
+        const e3 = obj.extreme("yMax");
+        expect(e3.x).toStrictEqual(pars.values);
+        expect(e3.values[0].y.length).toBe(3);
+
+        // Check that the single case was a subset of the full set
+        expect(e3.values[0].y[0]).toBe(e1.values[0].y[0]);
+    });
 });
 
 describe("can prevent issues with misshaped outputs", () => {

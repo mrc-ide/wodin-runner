@@ -116,7 +116,11 @@ export class Batch {
 
     private findExtremes() {
         if (this._extremes === undefined) {
-            this._extremes = computeExtremes(this.tStart, this.tEnd, this.pars.values, this.solutions);
+            const extremes = computeExtremes(this.tStart, this.tEnd, this.pars.values, this.solutions);
+            if (this._pending.length !== 0) {
+                return extremes;
+            }
+            this._extremes = extremes;
         }
         return this._extremes;
     }
@@ -321,8 +325,12 @@ export interface Extremes<T> {
     yMax: T;
 }
 
-export function computeExtremes(tStart: number, tEnd: number, x: number[],
-                                solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
+// TODO: It's possible that for the discrete time models we should do
+// this differently. I think allowing customisation of the number of
+// points here would be sensible, as then we can look this up more
+// accurately for dust.
+function computeExtremes(tStart: number, tEnd: number, x: number[],
+                         solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
     const n = 501;
     const times = {
         mode: TimeMode.Grid,
@@ -338,13 +346,15 @@ export function computeExtremes(tStart: number, tEnd: number, x: number[],
 // additional "dimension" of extreme (we end up with four things we're
 // trying to keep track of, rather than just one).
 export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
-    const times = result[0].x;
-
-    const newSeriesSet = () => ({ x, values: [] });
+    const newSeriesSet = () => ({ x: [...x], values: [] });
     const ret: Extremes<SeriesSet> = {
         tMax: newSeriesSet(), tMin: newSeriesSet(), yMax: newSeriesSet(), yMin: newSeriesSet(),
     };
+    if (x.length === 0) {
+        return ret;
+    }
 
+    const times = result[0].x;
     const names = unique(result[0].values.map((s) => s.name));
     for (const nm of names) {
         const s = alignDescriptions(result.map((r) => r.values.filter((el) => el.name === nm)));
