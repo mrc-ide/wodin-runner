@@ -257,19 +257,49 @@ function getParameterValueAsNumber(pars: UserType, name: string): number {
     return value;
 }
 
-export function valueAtTime(time: number, x: number[], solutions: InterpolatedSolution[]): SeriesSet {
+function valueAtTime(time: number, x: number[], solutions: InterpolatedSolution[]): SeriesSet {
+    // Note that here we get a length-1 array for each series
     const result = solutions.map(
         (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
     return valueAtTimeResult(x, result);
 }
 
+// Create a SeriesSet with the domain being parameters that we
+// iterated over.
+//
+// In the simple case where we have an ODE model or a single summary
+// statistic, there will be one series per variable in the series
+// set. Where mutiple summaries are present, there will be one per
+// name/description combination.
+//
+// For stochastic models with multiple summaries, each SeriesSet will
+// have up to nVariables * nSummaries differen traces in it,
+// distinguished by their "name" and "description" properties within
+// each element of a SeriesSet. We want to comute the extremes for
+// each name/description combination and return a single SeriesSet
+// from this.
+//
+// There's a complication where we have deterministic traces mixed in
+// with more than one stochastic summaries; se below for details.
 export function valueAtTimeResult(x: number[], result: SeriesSet[]): SeriesSet {
     const ret: SeriesSet = { x, values: [] };
     const names = unique(result[0].values.map((s) => s.name));
+    // First, loop over each distinct variable (e.g., S, I, R)
     for (const nm of names) {
-        const s = repairDeterministic(result.map((r) => r.values.filter((el) => el.name === nm)));
+        // Make sure that all "description" fields, where present, are
+        // aligned consistently for this variable; see below for
+        // details.
+        const s = alignDescriptions(result.map((r) => r.values.filter((el) => el.name === nm)));
+        // Then loop over each summary, differentiated by the
+        // description field, for this variable (e.g. S Mean, S Min, S
+        // Max). For ODE models "len" is always 1.
         const len = s[0].length;
         for (let idx = 0; idx < len; ++idx) {
+            // We need to get the 0'th element here because the
+            // interpolated function always returns an array (see
+            // valueAtTime). Apply this collected set of y values
+            // against the metadata (name and description) from the
+            // first found series.
             const y = s.map((el) => el[idx].y[0]);
             ret.values.push({...s[0][idx], y });
         }
@@ -304,16 +334,9 @@ export function computeExtremes(tStart: number, tEnd: number, x: number[],
     return computeExtremesResult(x, result);
 }
 
-function findExtremes(t: number[], y: number[]): Extremes<number> {
-    const idxMin = whichMin(y);
-    const idxMax = whichMax(y);
-    const tMin = t[idxMin];
-    const tMax = t[idxMax];
-    const yMin = y[idxMin];
-    const yMax = y[idxMax];
-    return {tMax, tMin, yMax, yMin};
-}
-
+// The same pattern as valueAtTimeResult, but complicated by the
+// additional "dimension" of extreme (we end up with four things we're
+// trying to keep track of, rather than just one).
 export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
     const times = result[0].x;
 
@@ -324,7 +347,7 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
 
     const names = unique(result[0].values.map((s) => s.name));
     for (const nm of names) {
-        const s = repairDeterministic(result.map((r) => r.values.filter((el) => el.name === nm)));
+        const s = alignDescriptions(result.map((r) => r.values.filter((el) => el.name === nm)));
         const len = s[0].length;
         for (let idx = 0; idx < len; ++idx) {
             const extremes = s.map((el) => findExtremes(times, el[idx].y));
@@ -338,13 +361,65 @@ export function computeExtremesResult(x: number[], result: SeriesSet[]): Extreme
     return ret;
 }
 
-function repairDeterministic(result: SeriesSetValues[][]): SeriesSetValues[][] {
+function findExtremes(t: number[], y: number[]): Extremes<number> {
+    const idxMin = whichMin(y);
+    const idxMax = whichMax(y);
+    const tMin = t[idxMin];
+    const tMax = t[idxMax];
+    const yMin = y[idxMin];
+    const yMax = y[idxMax];
+    return {tMax, tMin, yMax, yMin};
+}
+
+// Make sure that the "description" fields are consistent within each
+// variable across a set of SeriesSetValues (i.e., an array of the
+// "values" field of a set of SeriesSets, typically over a range of
+// parameters).
+//
+// We'll be given an array-of-arrays corresponding to the
+// SeriesSetValues for a *single variable* (they are filtered to this
+// before passing here); result[i][j] is the i'th parameter set and
+// j'th version of that variable's trace within this parameter
+// set. For ODE models, and for stochastic models where there is only
+// a single summary the second dimension will always be length 1.
+//
+// In the case supported by odin-js itself this function is the
+// identity function, passing "result" back unmodified. This is
+// because with ODE models there will always be a single trace per
+// variable within a SeriesSet, with no "description" field present,
+// so there is no alignment needed.
+//
+// In dust models where the simulation was run with multiple summary
+// statistics, the second dimension will have length of more than
+// 1. However, in the case where a trace was stochastic only a single
+// deterministic trace will be returned.  That's fine if this trace is
+// deterministic over all parameter sets, but in the case where some
+// parameter sets return a single deterministic trace we want to
+// replicate the deterministic trace to the same length as the
+// stochastic ones and copy over the description fields from the
+// stochastic traces.
+//
+// So given input as
+//
+//   [[aMean, aMin, aMax], [bDeterministic], [cMean, cMin, cMax]]
+//
+// We want to return
+//
+//   [[aMean, aMin, aMax], [bMean*, bMin*, bMax*], [cMean, cMin, cMax]]
+//
+// where all the "b" serieses have the same y as bDeterminstic but the
+// descriptions Mean, Min and Max following the "a" and "c" series.
+//
+// The function alignDescriptionsGetLevels works out what this array
+// of description values should be, and double-checks that the
+// serieses are alignable.
+function alignDescriptions(result: SeriesSetValues[][]): SeriesSetValues[][] {
     const len = result.map((el) => el.length);
     if (len.every((el) => el === 1)) {
         return result;
     }
     const n = Math.max(...len);
-    const description = repairDeterministicDescription(result);
+    const description = alignDescriptionsGetLevels(result);
     for (let i = 0; i < result.length; ++i) {
         if (result[i].length === 1) {
             result[i] = description.map((desc: string) => ({ ...result[i][0], description: desc }));
@@ -353,10 +428,20 @@ function repairDeterministic(result: SeriesSetValues[][]): SeriesSetValues[][] {
     return result;
 }
 
-// All the error handling is here; we should never trigger this in a
-// real run, but exists to prevent issues with changes to odin/dust
-// that might upset it.
-export function repairDeterministicDescription(result: SeriesSetValues[][]): string[] {
+// Check that in our array-of-arrays of series values (see above) that
+// the "description" fields are alignable. That means:
+//
+// * if we all series sets have "description" fields, then these are
+//   the same values in the same order for every set.
+// * if we have more than one series for a variable then every series
+//   has a defined description
+// * in the case where some series only have a single entry, that all
+//   serieses that only have single entry have the same entry
+//
+// We return the array of description values - because of the early
+// exit condition in alignDescriptions this will always have length
+// greater than one.
+export function alignDescriptionsGetLevels(result: SeriesSetValues[][]): string[] {
     let descriptionSingle: string | undefined | null = null;
     let description: string[] = [];
     result.forEach((r) => {
