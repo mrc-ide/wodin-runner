@@ -76,9 +76,9 @@ export function interpolateCheckY(dimArg: number[], dimTarget: number[],
  */
 export function interpolateCheckT(tStart: number, tEnd: number,
                                   times?: InterpolateTimes,
-                                  tcrit?: number) {
+                                  tcrit?: number[]) {
     if (times === undefined) {
-        return Infinity;
+        return tcrit;
     }
     if (tStart < times.min) {
         throw Error("Integration times do not span interpolation range;" +
@@ -88,19 +88,15 @@ export function interpolateCheckT(tStart: number, tEnd: number,
         throw Error("Integration times do not span interpolation range;" +
                     ` max: ${times.max}`);
     }
-
-    // See odin (R/generate_r_support.R:support_check_interpolate_t)
-    // It would be better to add an else clause to this containing
-    //
-    // tcrit = Math.min(tcrit, times.max);
-    //
-    // but this requires updating odin tests and the other
-    // targets. It's probably the correct behaviour though.
-    if (tcrit === undefined) {
-        tcrit = times.max;
+    if (times.max == Infinity) {
+        return tcrit;
     }
 
-    return tcrit;
+    if (tcrit === undefined) {
+        tcrit = [];
+    }
+
+    return [...tcrit, times.max];
 }
 
 export function interpolateTimes(start: number[], end: number[]): InterpolateTimes {
