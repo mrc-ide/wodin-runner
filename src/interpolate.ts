@@ -88,7 +88,7 @@ export function interpolateCheckT(tStart: number, tEnd: number,
         throw Error("Integration times do not span interpolation range;" +
                     ` max: ${times.max}`);
     }
-    if (times.max == Infinity) {
+    if (times.max === Infinity) {
         return tcrit;
     }
 
