@@ -16,20 +16,22 @@ describe("Can validate interpolation argumements", () => {
 
 describe("Can validate interpolation times", () => {
     it("Requires no tcrit with no interpolationTimes", () => {
-        expect(interpolateCheckT(0, 10)).toBe(Infinity);
-        expect(interpolateCheckT(0, 10, undefined)).toBe(Infinity);
+        expect(interpolateCheckT(0, 10)).toBe(undefined);
+        expect(interpolateCheckT(0, 10, undefined)).toBe(undefined);
+        expect(interpolateCheckT(0, 10, undefined, [1, 2])).toStrictEqual([1, 2]);
     });
 
     it("Requires no tcrit with no max interpolation time", () => {
         const t = {min: 0, max: Infinity};
-        expect(interpolateCheckT(0, 10, t)).toBe(Infinity);
+        expect(interpolateCheckT(0, 10, t)).toBe(undefined);
+        expect(interpolateCheckT(0, 10, t, [1, 2])).toStrictEqual([1, 2]);
     });
 
     it("Can report back tcrit from interpolation times", () => {
         const t = {min: 0, max: 11};
-        expect(interpolateCheckT(0, 10, t)).toBe(11);
-        expect(interpolateCheckT(0, 10, t, 10.5)).toBe(10.5);
-        expect(interpolateCheckT(0, 10, t, 11.5)).toBe(11.5);
+        expect(interpolateCheckT(0, 10, t)).toStrictEqual([11]);
+        expect(interpolateCheckT(0, 10, t, [10.5])).toStrictEqual([10.5, 11]);
+        expect(interpolateCheckT(0, 10, t, [11.5])).toStrictEqual([11.5, 11]);
     });
 
     it("Requires that integration times do not extrapolate", () => {
