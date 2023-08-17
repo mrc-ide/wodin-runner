@@ -1,12 +1,14 @@
 import type { DopriControlParam } from "dopri";
 
 import type { OdinModelConstructable } from "./model";
-import { InterpolatedSolution, SeriesSet, SeriesSetValues, TimeMode, Times } from "./solution";
+import {InterpolatedSolution, SeriesSet, SeriesSetValues, TimeMode, Times, UserTypeSeriesSet} from "./solution";
 import { UserType } from "./user";
 import { grid, gridLog, sameArrayContents, unique, whichMax, whichMin } from "./util";
 import { wodinRun } from "./wodin";
 
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
+
+// TODO: throw error if try to run a batch with empty VaryingParams
 
 export class Batch {
     /** The parameters used for this batch run */
@@ -22,10 +24,14 @@ export class Batch {
     public readonly solutions: InterpolatedSolution[];
 
     /** An array of errors */
-    public readonly errors: BatchError[];
+    //public readonly errors: BatchError[];
 
-    private _extremes?: Extremes<SeriesSet>;
-    private _pending: number[];
+    /** An array of objects recording success/failure of each run, along with any error message */
+    public readonly runStatuses: RunStatus[];
+
+    private _extremes?: Extremes<UserTypeSeriesSet>;
+    private _varyingParsValues: UserType[];
+    private _pending: UserType[];
     private readonly _run: singleBatchRun;
     private readonly _nPointsForExtremes: number;
 
@@ -48,14 +54,20 @@ export class Batch {
                 nPointsForExtremes: number = 501) {
         // Start with an empty BatchPars object, we'll re-add values
         // as they are successfully computed later.
-        this.pars = { ...pars, values: [] as number[]};
+        this.pars = pars;
         this.tStart = tStart;
         this.tEnd = tEnd;
         this.solutions = [];
-        this.errors = [];
-        this._pending = pars.values;
+        this.runStatuses = [];
+        this._varyingParsValues = Batch.expandVaryingParams(pars.varying);
+        this._pending = [...this._varyingParsValues];
         this._run = run;
         this._nPointsForExtremes = nPointsForExtremes;
+    }
+
+    /** Returns only those run statuses which are failures */
+    public get errors(): RunStatus[] {
+        return this.runStatuses.filter((s) => !s.success);
     }
 
     /**
@@ -67,14 +79,14 @@ export class Batch {
      */
     public compute(): boolean {
         if (this._pending.length > 0) {
-            const value = this._pending[0];
+            const values = this._pending[0];
             this._pending = this._pending.slice(1);
-            const p = updatePars(this.pars.base, this.pars.name, value);
+            const p = updatePars(this.pars.base, values);
             try {
                 this.solutions.push(this._run(p, this.tStart, this.tEnd));
-                this.pars.values.push(value);
+                this.addRunStatus(values, true, null);
             } catch (e: any) {
-                this.errors.push({ value, error: (e as Error).message });
+                this.addRunStatus(values, false, (e as Error).message);
             }
         }
         const isComplete = this._pending.length === 0;
@@ -102,7 +114,7 @@ export class Batch {
      * represent the beginning and end of the solution
      */
     public valueAtTime(time: number): SeriesSet {
-        return valueAtTime(time, this.pars.values, this.solutions);
+        return valueAtTime(time, this._varyingParsValues, this.solutions);
     }
 
     /**
@@ -114,7 +126,7 @@ export class Batch {
      *   * "tMin": The time that each series reached its minimum
      *   * "tMax": The time that each series reached its maximum
      */
-    public extreme(name: keyof Extremes<SeriesSet>): SeriesSet {
+    public extreme(name: keyof Extremes<UserTypeSeriesSet>): UserTypeSeriesSet {
         return this.findExtremes()[name];
     }
 
@@ -126,7 +138,7 @@ export class Batch {
                 tEnd: this.tEnd,
                 tStart: this.tStart,
             } as const;
-            const extremes = computeExtremes(times, this.pars.values, this.solutions);
+            const extremes = computeExtremes(times as Times, this._varyingParsValues, this.solutions);
             if (this._pending.length !== 0) {
                 return extremes;
             }
@@ -134,27 +146,75 @@ export class Batch {
         }
         return this._extremes;
     }
+
+    /**
+     * Expands varying parameters as defined in BatchPars.varying into an array of UserTypes, each of which
+     * represents a single combination of values for the varying parameters. We will combine these with the base
+     * pars for each run.
+     * */
+    private static expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
+        const result: UserType[] = [];
+        const parameters = Object.keys(varyingPars);
+        const addNextParameterToResult = (nextParameterIdx: number, currentValues: UserType) => {
+            const isLastParam = nextParameterIdx === parameters.length-1;
+            const param = parameters[nextParameterIdx];
+            varyingPars[param].forEach((value: number) => {
+                const newValues = {...currentValues, [param]: value};
+                if (!isLastParam) {
+                    addNextParameterToResult(nextParameterIdx +  1, newValues);
+                } else {
+                    result.push(newValues);
+                }
+            });
+        };
+        if (parameters.length > 0) {
+            addNextParameterToResult(0, {})
+        }
+        return result;
+    }
+
+    private addRunStatus(pars: UserType, success: boolean, error: string | null) {
+        this.runStatuses.push({pars, success, error});
+    }
 }
 
-/**
- * A set of parameters to run in a group, say for a sensitivity
- * analysis. Consists of a base set of parameters and a single
- * parameter that takes a range of values.
- */
-export interface BatchPars {
-    /** The base set of parameters */
-    base: UserType;
+/** Represents a single parameter whose value will vary when run in a group */
+export interface VaryingPar {
     /** The name of the parameter to vary */
     name: string;
     /** The values that `name` will take, replacing the value in `base` */
     values: number[];
 }
 
-export interface BatchError {
-    /** The failed parameter value */
-    value: number;
-    /** The error */
-    error: string;
+/**
+ * A set of parameters to run in a group, say for a sensitivity
+ * analysis. Consists of a base set of parameters and multiple
+ * parameters that takes a range of values.
+ */
+export interface BatchPars {
+    /** The base set of parameters */
+    base: UserType;
+    /** The parameters with varying values */
+    varying: VaryingPar[]
+}
+
+//export interface BatchError {
+//    /** The failed parameter value */
+//    value: number;
+//    /** The error */
+//    error: string;
+//}*/
+
+/**
+ * Records success or failure of an individual run, along with the run's combination varying parameter values and any
+ * error  */
+export interface RunStatus {
+    /** The varying parameter values for this run */
+    pars: UserType;
+    /** Whether the run succeeded (true) or failed (false) */
+    success: boolean;
+    /** Error message if the run failed, null if the run succeeded */
+    error: string | null;
 }
 
 /**
@@ -162,9 +222,9 @@ export interface BatchError {
  *
  * @param Model The model constructor
  *
- * @param pars Parameters of the model, and information about the one
- * to vary. Most easily generated with {@link batchParsRange} or
- * {@link batchParsDisplace}.
+ * @param pars Parameters of the model, and information about the ones
+ * to vary. VaryingParameters are most easily generated with {@link batchParsRange} or
+ * {@link batchParsDisplace}, and more than one can be included in BatchPars.
  *
  * @param tStart Start of the integration (often 0)
  *
@@ -188,7 +248,7 @@ export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
     return ret;
 }
 
-/** Generate a set of parameters suitable to pass through to {@link
+/** Generate a set of parameters suitable to include in BatchPars to pass through to {@link
  * batchRun}, evenly spaced between `min` and `max`.
  *
  * @param base The base set of parameters
@@ -208,7 +268,7 @@ export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
  */
 export function batchParsRange(base: UserType, name: string, count: number,
                                logarithmic: boolean,
-                               min: number, max: number): BatchPars {
+                               min: number, max: number): VaryingPar {
     const value = getParameterValueAsNumber(base, name);
     if (min > value) {
         throw Error(`Expected lower bound to be no greater than ${value}`);
@@ -227,7 +287,7 @@ export function batchParsRange(base: UserType, name: string, count: number,
     }
     const values = logarithmic ?
         gridLog(min, max, count) : grid(min, max, count);
-    return {base, name, values};
+    return {name, values};
 }
 
 /**
@@ -246,7 +306,7 @@ export function batchParsRange(base: UserType, name: string, count: number,
  */
 export function batchParsDisplace(base: UserType, name: string, count: number,
                                   logarithmic: boolean,
-                                  displace: number): BatchPars {
+                                  displace: number): VaryingPar {
     const value = getParameterValueAsNumber(base, name);
     const delta = displace / 100;
     const min = value * (1 - delta);
@@ -254,10 +314,8 @@ export function batchParsDisplace(base: UserType, name: string, count: number,
     return batchParsRange(base, name, count, logarithmic, min, max);
 }
 
-export function updatePars(base: UserType, name: string, value: number): UserType {
-    const ret = { ...base };
-    ret[name] = value;
-    return ret;
+export function updatePars(base: UserType, varying: UserType): UserType {
+    return { ...base, ...varying };
 }
 
 function getParameterValueAsNumber(pars: UserType, name: string): number {
@@ -271,7 +329,7 @@ function getParameterValueAsNumber(pars: UserType, name: string): number {
     return value;
 }
 
-function valueAtTime(time: number, x: number[], solutions: InterpolatedSolution[]): SeriesSet {
+function valueAtTime(time: number, x: UserType[], solutions: InterpolatedSolution[]): UserTypeSeriesSet {
     // Note that here we get a length-1 array for each series
     const result = solutions.map(
         (s: InterpolatedSolution) => s({ mode: TimeMode.Given, times: [time] }));
@@ -295,8 +353,8 @@ function valueAtTime(time: number, x: number[], solutions: InterpolatedSolution[
 //
 // There's a complication where we have deterministic traces mixed in
 // with more than one stochastic summaries; see below for details.
-export function valueAtTimeResult(x: number[], result: SeriesSet[]): SeriesSet {
-    const ret: SeriesSet = { x, values: [] };
+export function valueAtTimeResult(x: UserType[], result: SeriesSet[]): UserTypeSeriesSet {
+    const ret: UserTypeSeriesSet = { x, values: [] };
     const names = unique(result[0].values.map((s) => s.name));
     // First, loop over each distinct variable (e.g., S, I, R)
     for (const nm of names) {
@@ -335,7 +393,7 @@ export interface Extremes<T> {
     yMax: T;
 }
 
-function computeExtremes(times: Times, x: number[], solutions: InterpolatedSolution[]): Extremes<SeriesSet> {
+function computeExtremes(times: Times, x: UserType[], solutions: InterpolatedSolution[]): Extremes<UserTypeSeriesSet> {
     const result = solutions.map((s: InterpolatedSolution) => s(times));
     return computeExtremesResult(x, result);
 }
@@ -343,9 +401,9 @@ function computeExtremes(times: Times, x: number[], solutions: InterpolatedSolut
 // The same pattern as valueAtTimeResult, but complicated by the
 // additional "dimension" of extreme (we end up with four things we're
 // trying to keep track of, rather than just one).
-export function computeExtremesResult(x: number[], result: SeriesSet[]): Extremes<SeriesSet> {
+export function computeExtremesResult(x: UserType[], result: SeriesSet[]): Extremes<UserTypeSeriesSet> {
     const newSeriesSet = () => ({ x: [...x], values: [] });
-    const ret: Extremes<SeriesSet> = {
+    const ret: Extremes<UserTypeSeriesSet> = {
         tMax: newSeriesSet(), tMin: newSeriesSet(), yMax: newSeriesSet(), yMin: newSeriesSet(),
     };
     if (x.length === 0) {
