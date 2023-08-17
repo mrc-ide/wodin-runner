@@ -30,7 +30,7 @@ export class Batch {
     public readonly runStatuses: RunStatus[];
 
     private _extremes?: Extremes<UserTypeSeriesSet>;
-    private _varyingParsValues: UserType[];
+    //private _varyingParsValues: UserType[];
     private _pending: UserType[];
     private readonly _run: singleBatchRun;
     private readonly _nPointsForExtremes: number;
@@ -59,8 +59,8 @@ export class Batch {
         this.tEnd = tEnd;
         this.solutions = [];
         this.runStatuses = [];
-        this._varyingParsValues = Batch.expandVaryingParams(pars.varying);
-        this._pending = [...this._varyingParsValues];
+        this._pending = Batch.expandVaryingParams(pars.varying);
+        //this._pending = [...this._varyingParsValues];
         this._run = run;
         this._nPointsForExtremes = nPointsForExtremes;
     }
@@ -68,6 +68,10 @@ export class Batch {
     /** Returns only those run statuses which are failures */
     public get errors(): RunStatus[] {
         return this.runStatuses.filter((s) => !s.success);
+    }
+
+    public get successfulVaryingParams(): UserType[] {
+        return this.runStatuses.filter((s) => s.success).map((s) => s.pars);
     }
 
     /**
@@ -113,8 +117,8 @@ export class Batch {
      * @param time The time; you can use -Infinity and Infinity to
      * represent the beginning and end of the solution
      */
-    public valueAtTime(time: number): SeriesSet {
-        return valueAtTime(time, this._varyingParsValues, this.solutions);
+    public valueAtTime(time: number): UserTypeSeriesSet {
+        return valueAtTime(time, this.successfulVaryingParams, this.solutions);
     }
 
     /**
@@ -138,7 +142,7 @@ export class Batch {
                 tEnd: this.tEnd,
                 tStart: this.tStart,
             } as const;
-            const extremes = computeExtremes(times as Times, this._varyingParsValues, this.solutions);
+            const extremes = computeExtremes(times as Times, this.successfulVaryingParams, this.solutions);
             if (this._pending.length !== 0) {
                 return extremes;
             }
@@ -154,12 +158,11 @@ export class Batch {
      * */
     private static expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
         const result: UserType[] = [];
-        const parameters = Object.keys(varyingPars);
         const addNextParameterToResult = (nextParameterIdx: number, currentValues: UserType) => {
-            const isLastParam = nextParameterIdx === parameters.length-1;
-            const param = parameters[nextParameterIdx];
-            varyingPars[param].forEach((value: number) => {
-                const newValues = {...currentValues, [param]: value};
+            const isLastParam = nextParameterIdx === varyingPars.length-1;
+            const par = varyingPars[nextParameterIdx];
+            par.values.forEach((value: number) => {
+                const newValues = {...currentValues, [par.name]: value};
                 if (!isLastParam) {
                     addNextParameterToResult(nextParameterIdx +  1, newValues);
                 } else {
@@ -167,7 +170,7 @@ export class Batch {
                 }
             });
         };
-        if (parameters.length > 0) {
+        if (varyingPars.length > 0) {
             addNextParameterToResult(0, {})
         }
         return result;
@@ -195,7 +198,7 @@ export interface BatchPars {
     /** The base set of parameters */
     base: UserType;
     /** The parameters with varying values */
-    varying: VaryingPar[]
+    varying: VaryingPar[];
 }
 
 //export interface BatchError {
@@ -246,6 +249,10 @@ export function batchRun(Model: OdinModelConstructable, pars: BatchPars,
         ret.run();
     }
     return ret;
+}
+
+export function batchPars(base: UserType, varying: VaryingPar[]): BatchPars {
+    return { base, varying };
 }
 
 /** Generate a set of parameters suitable to include in BatchPars to pass through to {@link
