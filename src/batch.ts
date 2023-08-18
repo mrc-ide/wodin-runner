@@ -23,14 +23,10 @@ export class Batch {
     /** An array of solutions */
     public readonly solutions: InterpolatedSolution[];
 
-    /** An array of errors */
-    //public readonly errors: BatchError[];
-
     /** An array of objects recording success/failure of each run, along with any error message */
     public readonly runStatuses: RunStatus[];
 
     private _extremes?: Extremes<UserTypeSeriesSet>;
-    //private _varyingParsValues: UserType[];
     private _pending: UserType[];
     private readonly _run: singleBatchRun;
     private readonly _nPointsForExtremes: number;
@@ -133,28 +129,11 @@ export class Batch {
         return this.findExtremes()[name];
     }
 
-    private findExtremes() {
-        if (this._extremes === undefined) {
-            const times = {
-                mode: TimeMode.Grid,
-                nPoints: this._nPointsForExtremes,
-                tEnd: this.tEnd,
-                tStart: this.tStart,
-            } as const;
-            const extremes = computeExtremes(times as Times, this.successfulVaryingParams, this.solutions);
-            if (this._pending.length !== 0) {
-                return extremes;
-            }
-            this._extremes = extremes;
-        }
-        return this._extremes;
-    }
-
     /**
      * Expands varying parameters as defined in BatchPars.varying into an array of UserTypes, each of which
      * represents a single combination of values for the varying parameters. We will combine these with the base
      * pars for each run.
-     * */
+     */
     private static expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
         const result: UserType[] = [];
         const addNextParameterToResult = (nextParameterIdx: number, currentValues: UserType) => {
@@ -170,9 +149,28 @@ export class Batch {
             });
         };
         if (varyingPars.length > 0) {
-            addNextParameterToResult(0, {})
+            addNextParameterToResult(0, {});
+        } else {
+            throw Error("A batch must have at least one varying parameter");
         }
         return result;
+    }
+
+    private findExtremes() {
+        if (this._extremes === undefined) {
+            const times = {
+                mode: TimeMode.Grid,
+                nPoints: this._nPointsForExtremes,
+                tEnd: this.tEnd,
+                tStart: this.tStart,
+            } as const;
+            const extremes = computeExtremes(times as Times, this.successfulVaryingParams, this.solutions);
+            if (this._pending.length !== 0) {
+                return extremes;
+            }
+            this._extremes = extremes;
+        }
+        return this._extremes;
     }
 
     private addRunStatus(pars: UserType, success: boolean, error: string | null) {
@@ -199,13 +197,6 @@ export interface BatchPars {
     /** The parameters with varying values */
     varying: VaryingPar[];
 }
-
-//export interface BatchError {
-//    /** The failed parameter value */
-//    value: number;
-//    /** The error */
-//    error: string;
-//}*/
 
 /**
  * Records success or failure of an individual run, along with the run's combination varying parameter values and any
