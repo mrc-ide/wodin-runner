@@ -8,8 +8,6 @@ import { wodinRun } from "./wodin";
 
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
 
-// TODO: throw error if try to run a batch with empty VaryingParams
-
 export class Batch {
     /** The parameters used for this batch run */
     public readonly pars: BatchPars;
@@ -167,7 +165,7 @@ export class Batch {
                 tEnd: this.tEnd,
                 tStart: this.tStart,
             } as const;
-            const extremes = computeExtremes(times as Times, this.successfulVaryingParams, this.solutions);
+            const extremes = computeExtremes(times, this.successfulVaryingParams, this.solutions);
             if (this._pending.length !== 0) {
                 return extremes;
             }
@@ -185,7 +183,7 @@ export class Batch {
 export interface VaryingPar {
     /** The name of the parameter to vary */
     name: string;
-    /** The values that `name` will take, replacing the value in `base` */
+    /** The values that the parameters will take, replacing the value in the base params */
     values: number[];
 }
 
