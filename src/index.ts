@@ -22,7 +22,6 @@ export {
 } from "./solution";
 export {
     Batch,
-    BatchError,
     BatchPars,
     Extremes,
     batchParsDisplace,
