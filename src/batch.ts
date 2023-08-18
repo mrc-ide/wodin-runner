@@ -55,7 +55,7 @@ export class Batch {
         this.tEnd = tEnd;
         this.solutions = [];
         this.runStatuses = [];
-        this._pending = Batch.expandVaryingParams(pars.varying);
+        this._pending = this.expandVaryingParams(pars.varying);
         this._run = run;
         this._nPointsForExtremes = nPointsForExtremes;
     }
@@ -65,6 +65,9 @@ export class Batch {
         return this.runStatuses.filter((s) => !s.success);
     }
 
+    /** Returns those varying parameter values which successfully ran. The array returned should correspond by
+     * index to the solutions in the result
+     */
     public get successfulVaryingParams(): UserType[] {
         return this.runStatuses.filter((s) => s.success).map((s) => s.pars);
     }
@@ -134,10 +137,10 @@ export class Batch {
      * represents a single combination of values for the varying parameters. We will combine these with the base
      * pars for each run.
      */
-    private static expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
+    private expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
         const result: UserType[] = [];
         const addNextParameterToResult = (nextParameterIdx: number, currentValues: UserType) => {
-            const isLastParam = nextParameterIdx === varyingPars.length-1;
+            const isLastParam = nextParameterIdx === varyingPars.length - 1;
             const par = varyingPars[nextParameterIdx];
             par.values.forEach((value: number) => {
                 const newValues = {...currentValues, [par.name]: value};
@@ -200,7 +203,8 @@ export interface BatchPars {
 
 /**
  * Records success or failure of an individual run, along with the run's combination varying parameter values and any
- * error  */
+ * error
+ */
 export interface RunStatus {
     /** The varying parameter values for this run */
     pars: UserType;

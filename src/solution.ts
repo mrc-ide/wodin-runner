@@ -1,6 +1,6 @@
 import { FullSolution } from "./model";
+import { UserType } from "./user";
 import { grid } from "./util";
-import {UserType} from "./user";
 
 /**
  * We return a set of series from two different places:
@@ -10,7 +10,7 @@ import {UserType} from "./user";
  */
 export interface SeriesSet {
     /** The domain that the series is available at, typically time  */
-    x: number[] ;
+    x: number[];
     /** An array of individual traces, each of which are defined over
      * the same set of `x` values.
      */
@@ -25,7 +25,6 @@ export interface UserTypeSeriesSet {
      */
     values: SeriesSetValues[];
 }
-
 
 export interface SeriesSetValues {
     /**
