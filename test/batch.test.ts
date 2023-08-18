@@ -226,7 +226,45 @@ describe("run sensitivity with multiple varying parameters", () => {
         expect(valueFromSln(5)).toBeCloseTo(baseValue - 5, 4); // shiftScale -1, shift 5
     });
 
-    // TODO: test for expected success/failures statuses and solution values when some parameter sets fail
+    it("has expected results when some parameter combinations fail", () => {
+        const base = {scale: 1, shiftScale: 1, shift: 0};
+        const pars = {
+            base,
+            varying: [
+                { name: "scale", values: [1, 1000] },
+                { name: "shift", values: [0, 3, 5] },
+            ],
+        };
+        const control = {maxSteps: 100};
+        const res = batchRun(Oscillate, pars, 0, 10, control);
+        expect(res.successfulVaryingParams).toStrictEqual([
+            { scale: 1, shift: 0 },
+            { scale: 1, shift: 3 },
+            { scale: 1, shift: 5 }
+        ]);
+        expect(res.solutions.length).toBe(3);
+
+        const tStart = 0;
+        const tEnd = 10;
+        const nPoints = 11;
+        const times = { mode: TimeMode.Grid, tStart, tEnd, nPoints } as const;
+        for (let index = 0; index < 3; index++) {
+            const singleSln = wodinRun(Oscillate, {...base, ...res.successfulVaryingParams[index]}, tStart, tEnd, control);
+            expect(res.solutions[index](times)).toStrictEqual(singleSln(times));
+        }
+
+        const { errors } = res;
+        const expectedErr = "Integration failure: too many steps";
+        expect(errors.length).toBe(3);
+        expect(errors[0].pars).toStrictEqual({ scale: 1000, shift: 0});
+        expect(errors[0].error).toMatch(expectedErr);
+        expect(errors[1].pars).toStrictEqual({ scale: 1000, shift: 3});
+        expect(errors[1].error).toMatch(expectedErr);
+        expect(errors[2].pars).toStrictEqual({ scale: 1000, shift: 5});
+        expect(errors[2].error).toMatch(expectedErr);
+    });
+
+    // TODO: batchRunDiscrete??
 });
 
 describe("can extract from a batch result", () => {

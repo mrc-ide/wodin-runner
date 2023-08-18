@@ -60,7 +60,6 @@ export class Batch {
         this.solutions = [];
         this.runStatuses = [];
         this._pending = Batch.expandVaryingParams(pars.varying);
-        //this._pending = [...this._varyingParsValues];
         this._run = run;
         this._nPointsForExtremes = nPointsForExtremes;
     }
