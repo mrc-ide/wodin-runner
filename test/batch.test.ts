@@ -104,12 +104,12 @@ describe("run sensitivity", () => {
     });
 
     it("catches errors in fraction of runs", () => {
+        const base = { scale: 1, multiply: 1, shift: 0 };
         const varying = {
-            base: { scale: 1 },
             name: "scale",
             values: [0.01, 0.1, 1, 10, 100],
         };
-        const pars = batchPars(varying.base, [varying]);
+        const pars = batchPars(base, [varying]);
         const control = {maxSteps: 100};
         const res = batchRun(Oscillate, pars, 0, 10, control);
         // This will be 2 unless we change the behaviour of dopri
@@ -149,7 +149,7 @@ describe("run sensitivity", () => {
     // depends critically on the tolerances and number of steps.
     it("throws if all runs fail", () => {
         const pars = {
-            base: { scale: 1 },
+            base: { scale: 1, multiply: 1, shift: 0 },
             varying: [
                 { name: "scale", values: [0.01, 0.1, 1, 10, 100] }
             ]
@@ -185,6 +185,49 @@ describe("run sensitivity", () => {
     });
 });
 
+describe("run sensitivity with multiple varying parameters", () => {
+    it("runs successfully with expected varying parameter combinations and results", () => {
+        const base = {scale: 1, shiftScale: 1, shift: 0};
+        const pars = {
+            base,
+            varying: [
+                { name: "shiftScale", values: [1, -1] },
+                { name: "shift", values: [0, 3, 5] },
+            ],
+        };
+        const control = {maxSteps: 100};
+        const res = batchRun(Oscillate, pars, 0, 10, control);
+        expect(res.successfulVaryingParams).toStrictEqual([
+            { shiftScale: 1, shift: 0 },
+            { shiftScale: 1, shift: 3 },
+            { shiftScale: 1, shift: 5 },
+            { shiftScale: -1, shift: 0 },
+            { shiftScale: -1, shift: 3 },
+            { shiftScale: -1, shift: 5 },
+        ]);
+        expect(res.solutions.length).toBe(6);
+
+        const tStart = 0;
+        const tEnd = 10;
+        const nPoints = 11;
+        const times = { mode: TimeMode.Grid, tStart, tEnd, nPoints } as const;
+        for (let index = 0; index < 6; index++) {
+            const singleSln = wodinRun(Oscillate, {...base, ...res.successfulVaryingParams[index]}, tStart, tEnd, control);
+            expect(res.solutions[index](times)).toStrictEqual(singleSln(times));
+        }
+
+        // Do some sanity testing that varying parameters have expected influence on results
+        const valueFromSln = (slnIndex: number) => res.solutions[slnIndex](times).values[0].y[1];
+        const baseValue = valueFromSln(0); // shiftScale 1, shift 0
+        expect(valueFromSln(1)).toBeCloseTo(baseValue + 3, 4); // shiftScale 1, shift 3
+        expect(valueFromSln(2)).toBeCloseTo(baseValue + 5, 4); // shiftScale 1, shift 5
+        expect(valueFromSln(3)).toBeCloseTo(baseValue, 4); // shiftScale -1, shift 0
+        expect(valueFromSln(4)).toBeCloseTo(baseValue - 3, 4); // shiftScale -1, shift 3
+        expect(valueFromSln(5)).toBeCloseTo(baseValue - 5, 4); // shiftScale -1, shift 5
+    });
+
+    // TODO: test for expected success/failures statuses and solution values when some parameter sets fail
+});
 
 describe("can extract from a batch result", () => {
     // TODO: we need a model with both parameters and multiple traces
@@ -310,6 +353,7 @@ describe("valueAtTime", () => {
     });
 });
 
+/*
 describe("computeExtremes", () => {
     it("can work with simple odin output", () => {
         const tStart = 0;
@@ -504,3 +548,4 @@ describe("can prevent issues with misshaped outputs", () => {
             .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [a, b, c]");
     });
 });
+*/

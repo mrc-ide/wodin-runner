@@ -408,7 +408,7 @@ export class Oscillate {
 
     rhs(t, state, dstatedt) {
         var internal = this.internal;
-        dstatedt[0] = Math.sin(t * internal.scale);
+        dstatedt[0] = Math.sin(t * internal.scale) + (internal.shift * internal.shiftScale);
     }
 
     initial(t) {
@@ -421,9 +421,13 @@ export class Oscillate {
 
     setUser(user, unusedUserAction) {
         const internal = this.internal;
-        this.base.user.checkUser(user, ["scale"], unusedUserAction);
+        this.base.user.checkUser(user, ["scale", "shift", "shiftScale"], unusedUserAction);
         this.base.user.setUserScalar(user, "scale", internal, 1,
                                      -Infinity, Infinity, false);
+        this.base.user.setUserScalar(user, "shift", internal, 1,
+            -Infinity, Infinity, false);
+        this.base.user.setUserScalar(user, "shiftScale", internal, 1,
+            -Infinity, Infinity, false);
     }
 
     getInternal() {
