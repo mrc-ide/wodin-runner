@@ -6,7 +6,7 @@ import {
     alignDescriptionsGetLevels,
     updatePars,
     valueAtTimeResult,
-    batchPars, RunStatus
+    batchPars, RunStatus, expandVaryingParams
 } from "../src/batch";
 import { SeriesSetValues, TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
@@ -579,5 +579,74 @@ describe("can prevent issues with misshaped outputs", () => {
             .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [b, a]");
         expect(() => alignDescriptionsGetLevels([[ssv("a"), ssv("b")], [ssv("a"), ssv("b"), ssv("c")]]))
             .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [a, b, c]");
+    });
+});
+
+describe("expandVaryingParams", () => {
+    it("expands single varying param", () => {
+        const pars = [
+            { name: "A", values: [1, 2, 3] }
+        ];
+        const result = expandVaryingParams(pars);
+        expect(result).toStrictEqual([
+            { A: 1 },
+            { A: 2 },
+            { A: 3 },
+        ]);
+    });
+
+    it("expands multiple varying params", () => {
+        const pars = [
+            { name: "A", values: [1, 2, 3] },
+            { name: "B", values: [10, 20] },
+            { name: "C", values: [1.1, 3.3, 5.5] },
+        ];
+        const result = expandVaryingParams(pars);
+        expect(result).toStrictEqual([
+            { A: 1, B: 10, C: 1.1 },
+            { A: 1, B: 10, C: 3.3 },
+            { A: 1, B: 10, C: 5.5 },
+            { A: 1, B: 20, C: 1.1 },
+            { A: 1, B: 20, C: 3.3 },
+            { A: 1, B: 20, C: 5.5 },
+            { A: 2, B: 10, C: 1.1 },
+            { A: 2, B: 10, C: 3.3 },
+            { A: 2, B: 10, C: 5.5 },
+            { A: 2, B: 20, C: 1.1 },
+            { A: 2, B: 20, C: 3.3 },
+            { A: 2, B: 20, C: 5.5 },
+            { A: 3, B: 10, C: 1.1 },
+            { A: 3, B: 10, C: 3.3 },
+            { A: 3, B: 10, C: 5.5 },
+            { A: 3, B: 20, C: 1.1 },
+            { A: 3, B: 20, C: 3.3 },
+            { A: 3, B: 20, C: 5.5 },
+        ]);
+    });
+
+    it("expands when a param has only one value", () => {
+        const pars = [
+            { name: "A", values: [1] },
+            { name: "B", values: [10, 20] },
+        ];
+        const result = expandVaryingParams(pars);
+        expect(result).toStrictEqual([
+            { A: 1, B: 10 },
+            { A: 1, B: 20 }
+        ]);
+    });
+
+    it("throws error when no params are provided", () => {
+        expect(() => expandVaryingParams([]))
+            .toThrow("A batch must have at least one varying parameter");
+    });
+
+    it("throws error when param has no values", () => {
+        const pars = [
+            { name: "A", values: [1, 2] },
+            { name: "B", values: [] },
+        ];
+        expect(() => expandVaryingParams(pars))
+            .toThrow("Varying parameter 'B' must have at least one value");
     });
 });

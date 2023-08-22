@@ -8,6 +8,36 @@ import { wodinRun } from "./wodin";
 
 export type singleBatchRun = (pars: UserType, tStart: number, tEnd: number) => InterpolatedSolution;
 
+/**
+ * Expands varying parameters as defined in BatchPars.varying into an array of UserTypes, each of which
+ * represents a single combination of values for the varying parameters. We will combine these with the base
+ * pars for each run.
+ */
+export function expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
+    const result: UserType[] = [];
+    const addNextParameterToResult = (nextParameterIdx: number, currentValues: UserType) => {
+        const isLastParam = nextParameterIdx === varyingPars.length - 1;
+        const par = varyingPars[nextParameterIdx];
+        if (par.values.length === 0) {
+            throw Error(`Varying parameter '${par.name}' must have at least one value`);
+        }
+        par.values.forEach((value: number) => {
+            const newValues = {...currentValues, [par.name]: value};
+            if (!isLastParam) {
+                addNextParameterToResult(nextParameterIdx +  1, newValues);
+            } else {
+                result.push(newValues);
+            }
+        });
+    };
+    if (varyingPars.length > 0) {
+        addNextParameterToResult(0, {});
+    } else {
+        throw Error("A batch must have at least one varying parameter");
+    }
+    return result;
+}
+
 export class Batch {
     /** The parameters used for this batch run */
     public readonly pars: BatchPars;
@@ -53,7 +83,7 @@ export class Batch {
         this.tEnd = tEnd;
         this.solutions = [];
         this.runStatuses = [];
-        this._pending = this.expandVaryingParams(pars.varying);
+        this._pending = expandVaryingParams(pars.varying);
         this._run = run;
         this._nPointsForExtremes = nPointsForExtremes;
     }
@@ -128,33 +158,6 @@ export class Batch {
      */
     public extreme(name: keyof Extremes<UserTypeSeriesSet>): UserTypeSeriesSet {
         return this.findExtremes()[name];
-    }
-
-    /**
-     * Expands varying parameters as defined in BatchPars.varying into an array of UserTypes, each of which
-     * represents a single combination of values for the varying parameters. We will combine these with the base
-     * pars for each run.
-     */
-    private expandVaryingParams(varyingPars: VaryingPar[]): UserType[] {
-        const result: UserType[] = [];
-        const addNextParameterToResult = (nextParameterIdx: number, currentValues: UserType) => {
-            const isLastParam = nextParameterIdx === varyingPars.length - 1;
-            const par = varyingPars[nextParameterIdx];
-            par.values.forEach((value: number) => {
-                const newValues = {...currentValues, [par.name]: value};
-                if (!isLastParam) {
-                    addNextParameterToResult(nextParameterIdx +  1, newValues);
-                } else {
-                    result.push(newValues);
-                }
-            });
-        };
-        if (varyingPars.length > 0) {
-            addNextParameterToResult(0, {});
-        } else {
-            throw Error("A batch must have at least one varying parameter");
-        }
-        return result;
     }
 
     private findExtremes() {
