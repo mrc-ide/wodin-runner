@@ -1,16 +1,25 @@
-import { batchParsDisplace, batchParsRange, batchRun, computeExtremesResult, alignDescriptionsGetLevels, updatePars, valueAtTimeResult } from "../src/batch";
+import {
+    batchParsDisplace,
+    batchParsRange,
+    batchRun,
+    computeExtremesResult,
+    alignDescriptionsGetLevels,
+    updatePars,
+    valueAtTimeResult,
+    batchPars, RunStatus, expandVaryingParams
+} from "../src/batch";
 import { SeriesSetValues, TimeMode } from "../src/solution";
 import { grid, gridLog } from "../src/util";
 import { wodinRun } from "../src/wodin";
 
 import { approxEqualArray } from "./helpers";
 import { Oscillate, Output, User } from "./models";
+import {UserType} from "../src";
 
 describe("Can generate sensible sets of parameters", () => {
     it("Generates a simple sequence", () => {
         const user = { a: 1, b: 2 };
         const res = batchParsRange(user, "a", 5, false, 0, 2);
-        expect(res.base).toBe(user);
         expect(res.name).toBe("a");
         expect(res.values).toEqual(grid(0, 2, 5));
     });
@@ -18,7 +27,6 @@ describe("Can generate sensible sets of parameters", () => {
     it("Generates a logarithmic sequence", () => {
         const user = { a: 1, b: 2 };
         const res = batchParsRange(user, "a", 5, true, 0.5, 1.5);
-        expect(res.base).toBe(user);
         expect(res.name).toBe("a");
         expect(res.values).toEqual(gridLog(0.5, 1.5, 5));
     });
@@ -26,7 +34,6 @@ describe("Can generate sensible sets of parameters", () => {
     it("Generates a displaced sequence", () => {
         const user = { a: 1, b: 2 };
         const res = batchParsDisplace(user, "b", 5, false, 50);
-        expect(res.base).toBe(user);
         expect(res.name).toBe("b");
         expect(res.values).toEqual(grid(1, 3, 5));
     });
@@ -67,16 +74,23 @@ describe("Can generate sensible sets of parameters", () => {
 
     it("Updates parameter values correctly", () => {
         const user = { a: 1, b: 2 };
-        const p = updatePars(user, "a", 3);
+        const p = updatePars(user, {a: 3});
         expect(p["a"]).toBe(3);
         expect(p["b"]).toBe(2);
+    });
+
+    it("Batch throws error if no varying parameters", () => {
+        const pars = batchPars({a: 1}, []);
+        expect(() => batchRun(Oscillate, pars, 0, 10, {}))
+            .toThrow("A batch must have at least one varying parameter");
     });
 });
 
 describe("run sensitivity", () => {
     it("runs without error", () => {
         const user = { a: 2 };
-        const pars = batchParsRange(user, "a", 5, false, 0, 4);
+        const varying = batchParsRange(user, "a", 5, false, 0, 4);
+        const pars = batchPars(user, [varying]);
         const control = {};
         const tStart = 0;
         const tEnd = 10;
@@ -96,24 +110,43 @@ describe("run sensitivity", () => {
     });
 
     it("catches errors in fraction of runs", () => {
-        const pars = {
-            base: { scale: 1 },
+        const base = { scale: 1, shiftScale: 1, shift: 0 };
+        const varying = {
             name: "scale",
             values: [0.01, 0.1, 1, 10, 100],
         };
+        const pars = batchPars(base, [varying]);
         const control = {maxSteps: 100};
         const res = batchRun(Oscillate, pars, 0, 10, control);
         // This will be 2 unless we change the behaviour of dopri
         expect(res.errors.length).toEqual(2);
-        expect(res.errors[0].value).toEqual(10);
-        expect(res.errors[1].value).toEqual(100);
+        expect(res.errors[0].pars["scale"]).toEqual(10);
+        expect(res.errors[1].pars["scale"]).toEqual(100);
         expect(res.errors[0].error).toMatch("too many steps");
 
         expect(res.solutions.length).toBe(3);
-        expect(res.pars.values).toEqual([0.01, 0.1, 1]);
+        expect(res.pars.varying[0].name).toEqual("scale");
+        expect(res.pars.varying[0].values).toEqual([0.01, 0.1, 1, 10, 100]);
+
+        const expectRunStatus = (runStatus: RunStatus, pars: UserType, success: boolean, errorMatch: null | string) => {
+            expect(runStatus.pars).toStrictEqual(pars);
+            expect(runStatus.success).toBe(success);
+            if (!errorMatch) {
+                expect(runStatus.error).toBe(null);
+            } else {
+                expect(runStatus.error).toMatch(errorMatch);
+            }
+        };
+
+        expect(res.runStatuses.length).toBe(5);
+        expectRunStatus(res.runStatuses[0], { scale: 0.01 }, true, null);
+        expectRunStatus(res.runStatuses[1], { scale: 0.1 }, true, null);
+        expectRunStatus(res.runStatuses[2], { scale: 1 }, true, null);
+        expectRunStatus(res.runStatuses[3], { scale: 10 }, false, "too many steps");
+        expectRunStatus(res.runStatuses[4], { scale: 100 }, false, "too many steps");
 
         // Summaries also work over the reduced set of solutions
-        expect(res.valueAtTime(10).x.length).toEqual(3);
+        expect(res.valueAtTime(10).x).toEqual([{scale: 0.01}, {scale: 0.1}, {scale: 1}]);
     });
 
     // This is very unlikely to happen in practice because we require
@@ -122,9 +155,10 @@ describe("run sensitivity", () => {
     // depends critically on the tolerances and number of steps.
     it("throws if all runs fail", () => {
         const pars = {
-            base: { scale: 1 },
-            name: "scale",
-            values: [0.01, 0.1, 1, 10, 100],
+            base: { scale: 1, shiftScale: 1, shift: 0 },
+            varying: [
+                { name: "scale", values: [0.01, 0.1, 1, 10, 100] }
+            ]
         };
         const control = {maxSteps: 1};
         // Not the world's most lovely error, but hopefully rare in practice.
@@ -134,7 +168,8 @@ describe("run sensitivity", () => {
 
     it("can run in non-blocking mode", () => {
         const user = { a: 2 };
-        const pars = batchParsRange(user, "a", 3, false, 0, 4);
+        const varying = batchParsRange(user, "a", 3, false, 0, 4);
+        const pars = batchPars(user, [varying]);
         const control = {};
         const tStart = 0;
         const tEnd = 10;
@@ -144,16 +179,96 @@ describe("run sensitivity", () => {
 
         expect(obj.compute()).toBe(false);
         expect(obj.solutions.length).toBe(1);
-        expect(obj.pars.values).toEqual([0]);
+        expect(obj.successfulVaryingParams).toEqual([{a: 0}]);
         expect(obj.compute()).toBe(false);
         expect(obj.solutions.length).toBe(2);
-        expect(obj.pars.values).toEqual([0, 2]);
+        expect(obj.successfulVaryingParams).toEqual([{a: 0}, {a: 2}]);
         expect(obj.compute()).toBe(true);
         expect(obj.solutions.length).toBe(3);
         expect(obj.compute()).toBe(true);
         expect(obj.solutions.length).toBe(3);
-        expect(obj.pars.values).toEqual([0, 2, 4]);
-    })
+        expect(obj.successfulVaryingParams).toEqual([{a: 0}, {a: 2}, {a: 4}]);
+    });
+});
+
+describe("run sensitivity with multiple varying parameters", () => {
+    it("runs successfully with expected varying parameter combinations and results", () => {
+        const base = {scale: 1, shiftScale: 1, shift: 0};
+        const pars = {
+            base,
+            varying: [
+                { name: "shiftScale", values: [1, -1] },
+                { name: "shift", values: [0, 3, 5] },
+            ],
+        };
+        const control = {maxSteps: 100};
+        const res = batchRun(Oscillate, pars, 0, 10, control);
+        expect(res.successfulVaryingParams).toStrictEqual([
+            { shiftScale: 1, shift: 0 },
+            { shiftScale: 1, shift: 3 },
+            { shiftScale: 1, shift: 5 },
+            { shiftScale: -1, shift: 0 },
+            { shiftScale: -1, shift: 3 },
+            { shiftScale: -1, shift: 5 },
+        ]);
+        expect(res.solutions.length).toBe(6);
+
+        const tStart = 0;
+        const tEnd = 10;
+        const nPoints = 11;
+        const times = { mode: TimeMode.Grid, tStart, tEnd, nPoints } as const;
+        for (let index = 0; index < 6; index++) {
+            const singleSln = wodinRun(Oscillate, {...base, ...res.successfulVaryingParams[index]}, tStart, tEnd, control);
+            expect(res.solutions[index](times)).toStrictEqual(singleSln(times));
+        }
+
+        // Do some sanity testing that varying parameters have expected influence on results
+        const valueFromSln = (slnIndex: number) => res.solutions[slnIndex](times).values[0].y[1];
+        const baseValue = valueFromSln(0); // shiftScale 1, shift 0
+        expect(valueFromSln(1)).toBeCloseTo(baseValue + 3, 4); // shiftScale 1, shift 3
+        expect(valueFromSln(2)).toBeCloseTo(baseValue + 5, 4); // shiftScale 1, shift 5
+        expect(valueFromSln(3)).toBeCloseTo(baseValue, 4); // shiftScale -1, shift 0
+        expect(valueFromSln(4)).toBeCloseTo(baseValue - 3, 4); // shiftScale -1, shift 3
+        expect(valueFromSln(5)).toBeCloseTo(baseValue - 5, 4); // shiftScale -1, shift 5
+    });
+
+    it("has expected results when some parameter combinations fail", () => {
+        const base = {scale: 1, shiftScale: 1, shift: 0};
+        const pars = {
+            base,
+            varying: [
+                { name: "scale", values: [1, 1000] },
+                { name: "shift", values: [0, 3, 5] },
+            ],
+        };
+        const control = {maxSteps: 100};
+        const res = batchRun(Oscillate, pars, 0, 10, control);
+        expect(res.successfulVaryingParams).toStrictEqual([
+            { scale: 1, shift: 0 },
+            { scale: 1, shift: 3 },
+            { scale: 1, shift: 5 }
+        ]);
+        expect(res.solutions.length).toBe(3);
+
+        const tStart = 0;
+        const tEnd = 10;
+        const nPoints = 11;
+        const times = { mode: TimeMode.Grid, tStart, tEnd, nPoints } as const;
+        for (let index = 0; index < 3; index++) {
+            const singleSln = wodinRun(Oscillate, {...base, ...res.successfulVaryingParams[index]}, tStart, tEnd, control);
+            expect(res.solutions[index](times)).toStrictEqual(singleSln(times));
+        }
+
+        const { errors } = res;
+        const expectedErr = "Integration failure: too many steps";
+        expect(errors.length).toBe(3);
+        expect(errors[0].pars).toStrictEqual({ scale: 1000, shift: 0});
+        expect(errors[0].error).toMatch(expectedErr);
+        expect(errors[1].pars).toStrictEqual({ scale: 1000, shift: 3});
+        expect(errors[1].error).toMatch(expectedErr);
+        expect(errors[2].pars).toStrictEqual({ scale: 1000, shift: 5});
+        expect(errors[2].error).toMatch(expectedErr);
+    });
 });
 
 describe("can extract from a batch result", () => {
@@ -161,13 +276,14 @@ describe("can extract from a batch result", () => {
     // here to confirm this is correct.
     it("Extracts state at a particular time", () => {
         const user = { a: 2 };
-        const pars = batchParsRange(user, "a", 5, false, 0, 4);
+        const varying = batchParsRange(user, "a", 5, false, 0, 4);
+        const pars = batchPars(user, [varying]);
         const control = {};
         const tStart = 0;
         const tEnd = 10;
         const obj = batchRun(User, pars, tStart, tEnd, control);
         const res = obj.valueAtTime(tEnd);
-        expect(res.x).toEqual(grid(0, 4, 5));
+        expect(res.x.map((u) => u.a)).toEqual(grid(0, 4, 5));
         expect(res.values.length).toBe(1);
         expect(res.values[0].name).toBe("x");
         expect(approxEqualArray(res.values[0].y, [1, 11, 21, 31, 41]))
@@ -176,13 +292,14 @@ describe("can extract from a batch result", () => {
 
     it("Extracts state at a particular time for multivariable models", () => {
         const user = { a: 2 };
-        const pars = batchParsRange(user, "a", 5, false, 0, 4);
+        const varying = batchParsRange(user, "a", 5, false, 0, 4);
+        const pars = batchPars(user, [varying]);
         const control = {};
         const tStart = 0;
         const tEnd = 10;
         const obj = batchRun(Output, pars, tStart, tEnd, control);
         const res = obj.valueAtTime(tEnd);
-        expect(res.x).toEqual(grid(0, 4, 5));
+        expect(res.x.map((x: UserType) => x.a)).toEqual(grid(0, 4, 5));
         expect(res.values.length).toBe(2);
         expect(res.values[0].name).toBe("x");
         expect(approxEqualArray(res.values[0].y, [1, 11, 21, 31, 41]))
@@ -204,7 +321,7 @@ describe("valueAtTime", () => {
     it("can work with simple odin output", () => {
         const tStart = 0;
         const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{a: 0}, {a: 1}, {a: 2}]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number) => ({ x: t, values: [{ name: "a", y: [y] }] });
         const result = [values(4), values(5), values(6)];
@@ -218,7 +335,7 @@ describe("valueAtTime", () => {
     it("can work with elements that have descriptions", () => {
         const tStart = 0;
         const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{a: 0}, {a: 1}, {a: 2}]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number) => ({ x: t, values: [{ name: "a", y: [y], description: "Mean" }] });
         const result = [values(4), values(5), values(6)];
@@ -233,7 +350,7 @@ describe("valueAtTime", () => {
     it("can work with multiple summaries", () => {
         const tStart = 0;
         const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{a: 0}, {a: 1}, {a: 2}]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number) => ({ x: t, values: [
             { name: "a", y: [y], description: "Mean" },
@@ -257,7 +374,7 @@ describe("valueAtTime", () => {
     it("can work unequal multiple summaries", () => {
         const tStart = 0;
         const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{a: 0}, {a: 1}, {a: 2}]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number) => ({ x: t, values: [
             { name: "a", y: [y], description: "Mean" },
@@ -280,9 +397,7 @@ describe("valueAtTime", () => {
 
 describe("computeExtremes", () => {
     it("can work with simple odin output", () => {
-        const tStart = 0;
-        const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{ a: 0}, {a: 1}, {a: 2}]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number[]) => ({ x: t, values: [{ name: "a", y }] });
         const result = [
@@ -295,9 +410,7 @@ describe("computeExtremes", () => {
 
     // This is the trivial dust case; one summary, copy over description
     it("can work with elements that have descriptions", () => {
-        const tStart = 0;
-        const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{ a: 0}, { a: 1 }, { a: 2 }]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number[]) => ({ x: t, values: [{ name: "a", y, description: "Mean" }] });
         const result = [
@@ -317,9 +430,7 @@ describe("computeExtremes", () => {
     // statistics that perfectly align and we want to make sure that
     // we copy over the descriptions.
     it("can work with multiple summaries", () => {
-        const tStart = 0;
-        const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{ a: 0 }, { a: 1 }, { a: 2 }]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number[]) => ({ x: t, values: [
             { name: "a", y, description: "Mean" },
@@ -347,9 +458,7 @@ describe("computeExtremes", () => {
     // have both Mean and Min - we expect that our final set of
     // extremes will have Mean and Min.
     it("can work unequal multiple summaries", () => {
-        const tStart = 0;
-        const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{ a: 0 }, { a: 1 }, { a: 2 }]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number[]) => ({ x: t, values: [
             { name: "a", y, description: "Mean" },
@@ -376,9 +485,7 @@ describe("computeExtremes", () => {
     });
 
     it("can work with multiple series, too", () => {
-        const tStart = 0;
-        const tEnd = 10;
-        const x = [0, 1, 2]; // parameter values
+        const x = [{ a: 0 }, { a: 1 }, { a: 2 }]; // parameter values
         const t = [0, 1, 2, 3, 4];
         const values = (y: number[]) => ({ x: t, values: [
             { name: "a", y, description: "Mean" },
@@ -411,11 +518,13 @@ describe("computeExtremes", () => {
 
     it("recomputes when run in nonblocking mode", () => {
         const user = { a: 2 };
-        const pars = batchParsRange(user, "a", 3, false, 0, 4);
+        const varying = batchParsRange(user, "a", 3, false, 0, 4);
+        const pars = batchPars(user, [varying]);
         const control = {};
         const tStart = 0;
         const tEnd = 10;
         const obj = batchRun(User, pars, tStart, tEnd, control, false);
+        expect(obj.errors.length).toBe(0);
 
         // Empty case succeeds:
         const e0 = obj.extreme("yMax");
@@ -425,13 +534,13 @@ describe("computeExtremes", () => {
         // Single case runs
         obj.compute();
         const e1 = obj.extreme("yMax");
-        expect(e1.x).toStrictEqual([pars.values[0]]);
+        expect(e1.x).toStrictEqual([{a: varying.values[0]}]);
         expect(e1.values[0].y.length).toBe(1);
 
         // Then do the lot
         obj.run();
         const e3 = obj.extreme("yMax");
-        expect(e3.x).toStrictEqual(pars.values);
+        expect(e3.x).toStrictEqual(varying.values.map((val) => ({a: val})));
         expect(e3.values[0].y.length).toBe(3);
 
         // Check that the single case was a subset of the full set
@@ -470,5 +579,74 @@ describe("can prevent issues with misshaped outputs", () => {
             .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [b, a]");
         expect(() => alignDescriptionsGetLevels([[ssv("a"), ssv("b")], [ssv("a"), ssv("b"), ssv("c")]]))
             .toThrow("Unexpected inconsistent descriptions: have [a, b], but given [a, b, c]");
+    });
+});
+
+describe("expandVaryingParams", () => {
+    it("expands single varying param", () => {
+        const pars = [
+            { name: "A", values: [1, 2, 3] }
+        ];
+        const result = expandVaryingParams(pars);
+        expect(result).toStrictEqual([
+            { A: 1 },
+            { A: 2 },
+            { A: 3 },
+        ]);
+    });
+
+    it("expands multiple varying params", () => {
+        const pars = [
+            { name: "A", values: [1, 2, 3] },
+            { name: "B", values: [10, 20] },
+            { name: "C", values: [1.1, 3.3, 5.5] },
+        ];
+        const result = expandVaryingParams(pars);
+        expect(result).toStrictEqual([
+            { A: 1, B: 10, C: 1.1 },
+            { A: 1, B: 10, C: 3.3 },
+            { A: 1, B: 10, C: 5.5 },
+            { A: 1, B: 20, C: 1.1 },
+            { A: 1, B: 20, C: 3.3 },
+            { A: 1, B: 20, C: 5.5 },
+            { A: 2, B: 10, C: 1.1 },
+            { A: 2, B: 10, C: 3.3 },
+            { A: 2, B: 10, C: 5.5 },
+            { A: 2, B: 20, C: 1.1 },
+            { A: 2, B: 20, C: 3.3 },
+            { A: 2, B: 20, C: 5.5 },
+            { A: 3, B: 10, C: 1.1 },
+            { A: 3, B: 10, C: 3.3 },
+            { A: 3, B: 10, C: 5.5 },
+            { A: 3, B: 20, C: 1.1 },
+            { A: 3, B: 20, C: 3.3 },
+            { A: 3, B: 20, C: 5.5 },
+        ]);
+    });
+
+    it("expands when a param has only one value", () => {
+        const pars = [
+            { name: "A", values: [1] },
+            { name: "B", values: [10, 20] },
+        ];
+        const result = expandVaryingParams(pars);
+        expect(result).toStrictEqual([
+            { A: 1, B: 10 },
+            { A: 1, B: 20 }
+        ]);
+    });
+
+    it("throws error when no params are provided", () => {
+        expect(() => expandVaryingParams([]))
+            .toThrow("A batch must have at least one varying parameter");
+    });
+
+    it("throws error when param has no values", () => {
+        const pars = [
+            { name: "A", values: [1, 2] },
+            { name: "B", values: [] },
+        ];
+        expect(() => expandVaryingParams(pars))
+            .toThrow("Varying parameter 'B' must have at least one value");
     });
 });
